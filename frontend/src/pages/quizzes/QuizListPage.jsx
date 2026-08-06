@@ -1,0 +1,65 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { BrainCircuit, Clock, Gauge } from "lucide-react";
+import Button from "../../components/common/Button.jsx";
+import Card from "../../components/common/Card.jsx";
+import PageHeader from "../../components/common/PageHeader.jsx";
+import ProgressBar from "../../components/common/ProgressBar.jsx";
+import { quizService } from "../../services/cyberShieldApi.js";
+
+export default function QuizListPage() {
+  const [quizzes, setQuizzes] = useState([]);
+
+  useEffect(() => {
+    quizService.list().then(setQuizzes);
+  }, []);
+
+  return (
+    <div>
+      <PageHeader
+        eyebrow="Assessment engine"
+        title="Quizzes and Assessments"
+        description="Timed checks with automatic grading, pass/fail logic, attempt history, and weakness analysis."
+      />
+      <div className="grid gap-4 lg:grid-cols-2">
+        {quizzes.map((quiz) => (
+          <Card key={quiz.id} className="flex flex-col">
+            <div className="flex items-start gap-4">
+              <div className="rounded-md border border-cyanx/20 bg-cyanx/10 p-3 text-cyanx">
+                <BrainCircuit className="h-6 w-6" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-white">{quiz.title}</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-400">{quiz.description}</p>
+              </div>
+            </div>
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-md border border-white/10 bg-white/[0.035] p-3">
+                <Clock className="mb-2 h-4 w-4 text-cyanx" />
+                <p className="text-sm text-slate-400">{quiz.time_limit_minutes} minutes</p>
+              </div>
+              <div className="rounded-md border border-white/10 bg-white/[0.035] p-3">
+                <Gauge className="mb-2 h-4 w-4 text-mint" />
+                <p className="text-sm text-slate-400">Pass {quiz.pass_score}%</p>
+              </div>
+              <div className="rounded-md border border-white/10 bg-white/[0.035] p-3">
+                <BrainCircuit className="mb-2 h-4 w-4 text-amberx" />
+                <p className="text-sm text-slate-400">{quiz.question_count || quiz.questions?.length || 0} questions</p>
+              </div>
+            </div>
+            <div className="mt-5">
+              <div className="mb-2 flex justify-between text-xs text-slate-400">
+                <span>Best score</span>
+                <span>{quiz.best_score || 0}%</span>
+              </div>
+              <ProgressBar value={quiz.best_score || 0} />
+            </div>
+            <Button as={Link} to={`/quizzes/${quiz.id}`} className="mt-5">
+              Start assessment
+            </Button>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
