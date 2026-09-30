@@ -40,6 +40,12 @@ export const authService = {
   async resetPassword(email) {
     return withFallback(() => apiClient.post("/auth/password-reset/", { email }), {});
   },
+  async confirmPasswordReset(payload) {
+    return withFallback(() => apiClient.post("/auth/password-reset/confirm/", payload), {});
+  },
+  async verifyEmail(token) {
+    return withFallback(() => apiClient.post("/auth/verify-email/", { token }), {});
+  },
 };
 
 export const dashboardService = {
@@ -151,10 +157,17 @@ export const incidentService = {
       },
       { ...payload, id: Date.now(), reference_number: "INC-DEMO-DRAFT" },
     ),
+  assign: (id, officerId, note = "") =>
+    withFallback(() => apiClient.post(`/incidents/incidents/${id}/assign/`, { officer_id: officerId, note }), {}),
+  transition: (id, status, note, isInternal = false) =>
+    withFallback(() => apiClient.post(`/incidents/incidents/${id}/transition/`, { status, note, is_internal: isInternal }), {}),
 };
 
 export const alertService = {
   list: () => withFallback(() => apiClient.get("/alerts/alerts/"), alerts),
+  notifications: () => withFallback(() => apiClient.get("/alerts/notifications/"), () => alerts.map((alert) => ({ id: alert.id, alert, is_read: false }))),
+  markRead: (id) => withFallback(() => apiClient.post(`/alerts/notifications/${id}/read/`), {}),
+  markAllRead: () => withFallback(() => apiClient.post("/alerts/notifications/read_all/"), {}),
 };
 
 export const analyticsService = {
@@ -174,4 +187,15 @@ export const analyticsService = {
 export const adminService = {
   users: () => withFallback(() => apiClient.get("/auth/users/"), users),
   auditLogs: () => withFallback(() => apiClient.get("/audit/logs/"), auditLogs),
+  async exportAuditLogs() {
+    const response = await apiClient.get("/audit/logs/export/", { responseType: "blob" });
+    const url = URL.createObjectURL(response.data);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "audit_logs.csv";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  },
 };

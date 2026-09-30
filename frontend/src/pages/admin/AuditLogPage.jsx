@@ -9,6 +9,20 @@ import { formatDate } from "../../utils/formatters.js";
 export default function AuditLogPage() {
   const [logs, setLogs] = useState([]);
   const [query, setQuery] = useState("");
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
+
+  async function handleExport() {
+    setExporting(true);
+    setExportError("");
+    try {
+      await adminService.exportAuditLogs();
+    } catch {
+      setExportError("Export failed. Please try again.");
+    } finally {
+      setExporting(false);
+    }
+  }
 
   useEffect(() => {
     adminService.auditLogs().then(setLogs);
@@ -23,12 +37,13 @@ export default function AuditLogPage() {
         title="Audit Logs"
         description="Immutable-style login, role, incident, admin action, and security change tracking."
         actions={
-          <Button variant="secondary">
+          <Button variant="secondary" onClick={handleExport} disabled={exporting}>
             <Download className="h-4 w-4" />
-            Export
+            {exporting ? "Exporting..." : "Export"}
           </Button>
         }
       />
+      {exportError && <p className="mb-4 rounded-md border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-rose-200">{exportError}</p>}
       <Card className="mb-6">
         <label className="relative block">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />

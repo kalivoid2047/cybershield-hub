@@ -18,7 +18,14 @@ export default function ForgotPasswordPage() {
     <AuthFrame title="Reset password" subtitle="Request a secure password reset link for your account.">
       <form className="space-y-4" onSubmit={handleSubmit}>
         <input className="focus-ring min-h-11 w-full rounded-md border border-white/10 bg-white/7 px-3 text-white" placeholder="Email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
-        {sent && <p className="rounded-md border border-mint/20 bg-mint/10 px-3 py-2 text-sm text-emerald-100">If the account exists, reset instructions were sent.</p>}
+        {sent && (
+          <p className="rounded-md border border-mint/20 bg-mint/10 px-3 py-2 text-sm text-emerald-100">
+            If the account exists, reset instructions were sent.{" "}
+            <Link className="font-semibold underline" to="/reset-password">
+              Enter reset token
+            </Link>
+          </p>
+        )}
         <Button className="w-full" type="submit">
           Send reset link
         </Button>

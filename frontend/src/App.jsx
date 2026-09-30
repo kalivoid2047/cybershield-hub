@@ -4,6 +4,8 @@ import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 import LoginPage from "./pages/auth/LoginPage.jsx";
 import RegisterPage from "./pages/auth/RegisterPage.jsx";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage.jsx";
+import ResetPasswordPage from "./pages/auth/ResetPasswordPage.jsx";
+import VerifyEmailPage from "./pages/auth/VerifyEmailPage.jsx";
 import DashboardPage from "./pages/dashboard/DashboardPage.jsx";
 import TrainingPage from "./pages/training/TrainingPage.jsx";
 import LessonDetailPage from "./pages/training/LessonDetailPage.jsx";
@@ -24,6 +26,8 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route
         element={
           <ProtectedRoute>

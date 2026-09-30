@@ -6,18 +6,35 @@ import PageHeader from "../../components/common/PageHeader.jsx";
 import StatusBadge from "../../components/common/StatusBadge.jsx";
 import KanbanBoard from "../../components/incidents/KanbanBoard.jsx";
 import BarMetricChart from "../../components/charts/BarMetricChart.jsx";
+import { useAuth } from "../../contexts/AuthContext.jsx";
 import { incidentService } from "../../services/cyberShieldApi.js";
 
 export default function SOCDashboardPage() {
   const [queue, setQueue] = useState({});
   const [loaded, setLoaded] = useState(false);
+  const { user } = useAuth();
+
+  async function refreshQueue() {
+    const data = await incidentService.queue();
+    setQueue(data || {});
+    setLoaded(true);
+  }
 
   useEffect(() => {
-    incidentService.queue().then((data) => {
-      setQueue(data || {});
-      setLoaded(true);
-    });
+    refreshQueue();
   }, []);
+
+  // Card handlers throw on failure so the card can show an error; on success the
+  // queue is reloaded so the card moves to its new column.
+  async function handleAssign(incident) {
+    await incidentService.assign(incident.id, user.id);
+    await refreshQueue();
+  }
+
+  async function handleTransition(incident, status, note) {
+    await incidentService.transition(incident.id, status, note);
+    await refreshQueue();
+  }
 
   const incidents = Object.values(queue).flat();
   const severityCounts = ["low", "medium", "high", "critical"].map((severity) => incidents.filter((incident) => incident.severity === severity).length);
@@ -41,7 +58,7 @@ export default function SOCDashboardPage() {
             <h2 className="font-semibold text-white">Kanban queue</h2>
             <StatusBadge value="investigating" />
           </div>
-          <KanbanBoard grouped={queue} />
+          <KanbanBoard grouped={queue} onAssign={handleAssign} onTransition={handleTransition} />
         </Card>
         <div className="space-y-6">
           <Card>
