@@ -6,46 +6,74 @@ import PageHeader from "../../components/common/PageHeader.jsx";
 import StatusBadge from "../../components/common/StatusBadge.jsx";
 import { adminService } from "../../services/cyberShieldApi.js";
 
-const MAX_ATTEMPTS = 100; // keep in step with MAX_ATTEMPTS_LIMIT in apps/quizzes/serializers.py
+// Field definitions. Bounds mirror the API validators in apps/quizzes/serializers.py.
+const FIELDS = [
+  {
+    key: "max_attempts",
+    label: "Max attempts",
+    min: 0,
+    max: 100,
+    hint: (value) => (value === 0 ? "Unlimited" : `${value} per learner`),
+    rangeError: "Use 0 for unlimited, or up to 100.",
+  },
+  {
+    key: "pass_score",
+    label: "Pass mark (%)",
+    min: 1,
+    max: 100,
+    hint: (value) => `${value}% to pass`,
+    rangeError: "Enter 1 to 100.",
+  },
+  {
+    key: "time_limit_minutes",
+    label: "Time limit (min)",
+    min: 1,
+    max: 240,
+    hint: (value) => `${value} minute${value === 1 ? "" : "s"}`,
+    rangeError: "Enter 1 to 240.",
+  },
+];
 
-// The input is kept as a string while editing so it can be empty or half-typed.
-function parseAttempts(text) {
-  if (!/^\d+$/.test(text.trim())) return { error: "Enter a whole number (0 for unlimited)." };
+// Inputs are kept as strings while editing so they can be empty or half-typed.
+function parseField(field, text) {
+  if (!/^\d+$/.test(text.trim())) return { error: "Enter a whole number." };
   const value = Number(text);
-  if (value > MAX_ATTEMPTS) return { error: `Use ${MAX_ATTEMPTS} or fewer.` };
+  if (value < field.min || value > field.max) return { error: field.rangeError };
   return { value };
 }
 
 function QuizRow({ quiz, onSaved }) {
-  const [text, setText] = useState(String(quiz.max_attempts));
+  const [texts, setTexts] = useState(() => Object.fromEntries(FIELDS.map((field) => [field.key, String(quiz[field.key])])));
   const [status, setStatus] = useState({ kind: "idle" });
 
-  const parsed = parseAttempts(text);
-  const dirty = parsed.value !== undefined && parsed.value !== quiz.max_attempts;
+  const parsed = Object.fromEntries(FIELDS.map((field) => [field.key, parseField(field, texts[field.key])]));
+  const valid = FIELDS.every((field) => parsed[field.key].value !== undefined);
+  const changes = Object.fromEntries(FIELDS.filter((field) => parsed[field.key].value !== undefined && parsed[field.key].value !== quiz[field.key]).map((field) => [field.key, parsed[field.key].value]));
+  const dirty = valid && Object.keys(changes).length > 0;
 
   async function save() {
     setStatus({ kind: "saving" });
     try {
-      const updated = await adminService.updateQuiz(quiz.id, { max_attempts: parsed.value });
-      onSaved({ ...quiz, max_attempts: updated.max_attempts });
-      setText(String(updated.max_attempts));
+      const updated = await adminService.updateQuiz(quiz.id, changes);
+      const merged = { ...quiz, ...Object.fromEntries(FIELDS.map((field) => [field.key, updated[field.key]])) };
+      onSaved(merged);
+      setTexts(Object.fromEntries(FIELDS.map((field) => [field.key, String(merged[field.key])])));
       setStatus({ kind: "saved" });
     } catch (error) {
-      const details = error.response?.data?.error?.details?.max_attempts;
-      setStatus({ kind: "error", message: (Array.isArray(details) ? details[0] : null) || error.response?.data?.error?.message || "Couldn't save. Please try again." });
+      const details = error.response?.data?.error?.details;
+      const first = details && typeof details === "object" ? Object.values(details).flat()[0] : null;
+      setStatus({ kind: "error", message: (typeof first === "string" && first) || error.response?.data?.error?.message || "Couldn't save. Please try again." });
     }
   }
 
   return (
-    <li className="flex flex-col gap-4 py-5 md:flex-row md:items-center md:justify-between">
-      <div className="min-w-0">
+    <li className="flex flex-col gap-4 py-5 lg:flex-row lg:items-start lg:justify-between">
+      <div className="min-w-0 lg:pt-1">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="font-semibold text-white">{quiz.title}</h2>
           {!quiz.is_active && <StatusBadge value="closed" />}
         </div>
-        <p className="mt-1 text-sm text-slate-400">
-          {quiz.question_count} questions · pass {quiz.pass_score}% · {quiz.time_limit_minutes} min
-        </p>
+        <p className="mt-1 text-sm text-slate-400">{quiz.question_count} questions</p>
       </div>
       <form
         className="flex flex-wrap items-start gap-3"
@@ -54,33 +82,39 @@ function QuizRow({ quiz, onSaved }) {
           if (dirty) save();
         }}
       >
-        <div>
-          <label htmlFor={`attempts-${quiz.id}`} className="mb-1 block text-xs text-slate-400">
-            Max attempts
-          </label>
-          <input
-            id={`attempts-${quiz.id}`}
-            type="text"
-            inputMode="numeric"
-            value={text}
-            onChange={(event) => {
-              setText(event.target.value);
-              setStatus({ kind: "idle" });
-            }}
-            aria-invalid={parsed.error ? "true" : "false"}
-            aria-describedby={`attempts-help-${quiz.id}`}
-            className={`focus-ring min-h-10 w-24 rounded-md border bg-white/7 px-3 text-white ${parsed.error ? "border-rose-400/60" : "border-white/10"}`}
-          />
-          <p id={`attempts-help-${quiz.id}`} className={`mt-1 text-xs ${parsed.error ? "text-rose-200" : "text-slate-500"}`}>
-            {parsed.error || (parsed.value === 0 ? "Unlimited" : `${parsed.value} per learner`)}
-          </p>
-        </div>
+        {FIELDS.map((field) => {
+          const result = parsed[field.key];
+          const id = `${field.key}-${quiz.id}`;
+          return (
+            <div key={field.key}>
+              <label htmlFor={id} className="mb-1 block text-xs text-slate-400">
+                {field.label}
+              </label>
+              <input
+                id={id}
+                type="text"
+                inputMode="numeric"
+                value={texts[field.key]}
+                onChange={(event) => {
+                  setTexts((current) => ({ ...current, [field.key]: event.target.value }));
+                  setStatus({ kind: "idle" });
+                }}
+                aria-invalid={result.error ? "true" : "false"}
+                aria-describedby={`${id}-help`}
+                className={`focus-ring min-h-10 w-28 rounded-md border bg-white/7 px-3 text-white ${result.error ? "border-rose-400/60" : "border-white/10"}`}
+              />
+              <p id={`${id}-help`} className={`mt-1 max-w-[7rem] text-xs ${result.error ? "text-rose-200" : "text-slate-400"}`}>
+                {result.error || field.hint(result.value)}
+              </p>
+            </div>
+          );
+        })}
         <div className="pt-5">
           <Button type="submit" disabled={!dirty || status.kind === "saving"}>
             {status.kind === "saving" ? "Saving..." : "Save"}
           </Button>
         </div>
-        <div className="min-h-10 pt-6 text-sm" role="status" aria-live="polite">
+        <div className="min-h-10 max-w-[14rem] pt-6 text-sm" role="status" aria-live="polite">
           {status.kind === "saved" && (
             <span className="inline-flex items-center gap-1 text-emerald-200">
               <Check className="h-4 w-4" />
@@ -114,11 +148,11 @@ export default function QuizSettingsPage() {
       <PageHeader
         eyebrow="Administration"
         title="Quiz Settings"
-        description="Limit how many times each learner can attempt a quiz. Only submitted attempts count, and 0 means unlimited."
+        description="Set each quiz's attempt limit, pass mark and time limit. Attempt limits count submitted attempts only (0 is unlimited). Pass mark changes apply to future attempts; earlier results keep their outcome."
       />
       <Card className="mb-6">
         <label className="relative block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             className="focus-ring min-h-11 w-full rounded-md border border-white/10 bg-white/7 pl-10 pr-3 text-white"
             placeholder="Search quizzes"
@@ -128,6 +162,9 @@ export default function QuizSettingsPage() {
           />
         </label>
       </Card>
+      <p className="mb-4 text-xs text-slate-400">
+        The time limit is shown to learners and decides how long an unfinished attempt can be resumed. Quizzes are not automatically submitted when it runs out.
+      </p>
       <Card>
         {loadError ? (
           <p className="text-sm text-rose-200">We couldn't load the quizzes. Check that you have administrator access.</p>

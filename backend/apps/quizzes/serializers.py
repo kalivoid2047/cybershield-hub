@@ -4,6 +4,7 @@ from apps.quizzes.models import AnswerOption, Question, Quiz, QuizAttempt, QuizA
 from apps.quizzes.services import attempts_remaining
 
 MAX_ATTEMPTS_LIMIT = 100
+TIME_LIMIT_MAX_MINUTES = 240
 
 
 class AnswerOptionSerializer(serializers.ModelSerializer):
@@ -155,6 +156,17 @@ class QuizAdminSerializer(serializers.ModelSerializer):
         # 0 means unlimited; the upper bound just catches typos like 1000.
         if value > MAX_ATTEMPTS_LIMIT:
             raise serializers.ValidationError(f"Must be {MAX_ATTEMPTS_LIMIT} or fewer. Use 0 for unlimited attempts.")
+        return value
+
+    def validate_pass_score(self, value):
+        # 0 would make every submission a pass.
+        if not 1 <= value <= 100:
+            raise serializers.ValidationError("Pass mark must be between 1 and 100 percent.")
+        return value
+
+    def validate_time_limit_minutes(self, value):
+        if not 1 <= value <= TIME_LIMIT_MAX_MINUTES:
+            raise serializers.ValidationError(f"Time limit must be between 1 and {TIME_LIMIT_MAX_MINUTES} minutes.")
         return value
 
     def create(self, validated_data):

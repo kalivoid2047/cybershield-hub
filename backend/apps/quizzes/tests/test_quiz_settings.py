@@ -79,3 +79,102 @@ class TestEditingMaxAttempts:
 
         row = next(item for item in rows if item["id"] == quiz.id)
         assert row["max_attempts"] == 4 and row["is_active"] is False
+
+
+class TestEditingPassMarkAndTimeLimit:
+    def test_admin_can_change_pass_mark_and_time_limit_together(self, admin_client, quiz):
+        response = _patch(admin_client, quiz, {"pass_score": 85, "time_limit_minutes": 20})
+
+        assert response.status_code == 200
+        quiz.refresh_from_db()
+        assert (quiz.pass_score, quiz.time_limit_minutes) == (85, 20)
+
+    def test_changing_one_field_leaves_the_others_alone(self, admin_client, quiz):
+        quiz.max_attempts = 3
+        quiz.time_limit_minutes = 15
+        quiz.save()
+        original_pass = quiz.pass_score
+
+        _patch(admin_client, quiz, {"time_limit_minutes": 30})
+
+        quiz.refresh_from_db()
+        assert quiz.time_limit_minutes == 30
+        assert quiz.pass_score == original_pass
+        assert quiz.max_attempts == 3
+
+    @pytest.mark.parametrize("bad", [0, -5, 101, 500, "abc", None, 79.5])
+    def test_rejects_invalid_pass_mark(self, admin_client, quiz, bad):
+        original = quiz.pass_score
+
+        response = _patch(admin_client, quiz, {"pass_score": bad})
+
+        assert response.status_code == 400
+        quiz.refresh_from_db()
+        assert quiz.pass_score == original
+
+    @pytest.mark.parametrize("good", [1, 100])
+    def test_pass_mark_bounds_are_inclusive(self, admin_client, quiz, good):
+        assert _patch(admin_client, quiz, {"pass_score": good}).status_code == 200
+
+    @pytest.mark.parametrize("bad", [0, -1, 241, 10000, "ten", None, 7.5])
+    def test_rejects_invalid_time_limit(self, admin_client, quiz, bad):
+        original = quiz.time_limit_minutes
+
+        response = _patch(admin_client, quiz, {"time_limit_minutes": bad})
+
+        assert response.status_code == 400
+        quiz.refresh_from_db()
+        assert quiz.time_limit_minutes == original
+
+    @pytest.mark.parametrize("good", [1, 240])
+    def test_time_limit_bounds_are_inclusive(self, admin_client, quiz, good):
+        assert _patch(admin_client, quiz, {"time_limit_minutes": good}).status_code == 200
+
+    def test_one_invalid_field_rejects_the_whole_update(self, admin_client, quiz):
+        original = quiz.time_limit_minutes
+
+        response = _patch(admin_client, quiz, {"pass_score": 90, "time_limit_minutes": 0})
+
+        assert response.status_code == 400
+        quiz.refresh_from_db()
+        assert quiz.time_limit_minutes == original and quiz.pass_score != 90
+
+    def test_learner_cannot_change_them(self, user_client, quiz):
+        original = quiz.pass_score
+
+        assert _patch(user_client, quiz, {"pass_score": 1}).status_code == 403
+        quiz.refresh_from_db()
+        assert quiz.pass_score == original
+
+    def test_new_pass_mark_applies_to_future_grading_only(self, admin_client, user_client, quiz):
+        question = quiz.questions.first()
+        wrong = question.answers.get(is_correct=False)
+        right = question.answers.get(is_correct=True)
+        submit = lambda answer: user_client.post(  # noqa: E731
+            reverse("quizzes-submit", args=[quiz.id]), {"answers": [{"question_id": question.id, "answer_id": answer.id}]}, format="json"
+        ).json()["data"]
+
+        before = submit(right)
+        _patch(admin_client, quiz, {"pass_score": 100})
+        after_wrong = submit(wrong)
+
+        assert before["passed"] is True
+        assert after_wrong["passed"] is False
+        # The earlier attempt keeps the outcome it was graded with.
+        assert user_client.get(reverse("quiz-attempts-detail", args=[before["id"]])).json()["passed"] is True
+        assert user_client.get(reverse("quiz-attempts-detail", args=[before["id"]])).json()["pass_score"] == 100
+
+    def test_start_resume_window_follows_the_new_time_limit(self, admin_client, user_client, quiz):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        from apps.quizzes.models import QuizAttempt
+
+        first = user_client.post(reverse("quizzes-start", args=[quiz.id])).json()["data"]
+        QuizAttempt.objects.filter(id=first["id"]).update(started_at=timezone.now() - timedelta(minutes=30))
+        _patch(admin_client, quiz, {"time_limit_minutes": 45})
+
+        resumed = user_client.post(reverse("quizzes-start", args=[quiz.id])).json()["data"]
+
+        assert resumed["id"] == first["id"]
