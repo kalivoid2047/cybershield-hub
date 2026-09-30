@@ -16,11 +16,24 @@ class AnswerOptionAdminSerializer(serializers.ModelSerializer):
 
 
 class QuestionSerializer(serializers.ModelSerializer):
+    """Question as shown to someone taking the quiz.
+
+    Explanations often reveal the answer, so only staff receive them here; learners get
+    them per question on the graded attempt (QuizAttemptAnswerSerializer).
+    """
+
     answers = AnswerOptionSerializer(many=True, read_only=True)
 
     class Meta:
         model = Question
         fields = ["id", "prompt", "explanation", "competency", "points", "order", "answers"]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        if not (request and request.user.is_authenticated and request.user.is_staff):
+            data.pop("explanation", None)
+        return data
 
 
 class QuestionAdminSerializer(serializers.ModelSerializer):
@@ -139,15 +152,39 @@ class QuizAdminSerializer(serializers.ModelSerializer):
 
 class QuizAttemptAnswerSerializer(serializers.ModelSerializer):
     question_prompt = serializers.CharField(source="question.prompt", read_only=True)
+    competency = serializers.CharField(source="question.competency", read_only=True)
+    explanation = serializers.CharField(source="question.explanation", read_only=True)
     selected_text = serializers.CharField(source="selected_answer.text", read_only=True)
+    correct_answer_text = serializers.SerializerMethodField()
 
     class Meta:
         model = QuizAttemptAnswer
-        fields = ["id", "question", "question_prompt", "selected_answer", "selected_text", "is_correct", "points_awarded"]
+        fields = [
+            "id",
+            "question",
+            "question_prompt",
+            "competency",
+            "explanation",
+            "selected_answer",
+            "selected_text",
+            "correct_answer_text",
+            "is_correct",
+            "points_awarded",
+        ]
+
+    def get_correct_answer_text(self, obj):
+        # Iterate the (prefetched) answers rather than filtering, to avoid a query per row.
+        for answer in obj.question.answers.all():
+            if answer.is_correct:
+                return answer.text
+        return None
 
 
 class QuizAttemptSerializer(serializers.ModelSerializer):
     quiz_title = serializers.CharField(source="quiz.title", read_only=True)
+    pass_score = serializers.IntegerField(source="quiz.pass_score", read_only=True)
+    lesson_slug = serializers.CharField(source="quiz.lesson.slug", read_only=True)
+    lesson_title = serializers.CharField(source="quiz.lesson.title", read_only=True)
     answers = QuizAttemptAnswerSerializer(many=True, read_only=True)
 
     class Meta:
@@ -156,6 +193,9 @@ class QuizAttemptSerializer(serializers.ModelSerializer):
             "id",
             "quiz",
             "quiz_title",
+            "pass_score",
+            "lesson_slug",
+            "lesson_title",
             "score",
             "total_points",
             "earned_points",

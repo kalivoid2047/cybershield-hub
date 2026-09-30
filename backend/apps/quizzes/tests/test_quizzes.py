@@ -117,3 +117,92 @@ class TestQuizAttemptVisibility:
 
         assert response.status_code == 200
         assert response.json()["count"] == 0
+
+
+class TestQuizResultsDetail:
+    def _submit_wrong(self, user_client, quiz):
+        question = quiz.questions.first()
+        wrong = question.answers.get(is_correct=False)
+        response = user_client.post(
+            reverse("quizzes-submit", args=[quiz.id]),
+            {"answers": [{"question_id": question.id, "answer_id": wrong.id}]},
+            format="json",
+        )
+        return question, wrong, response.json()["data"]
+
+    def test_result_reveals_correct_answer_and_explanation_after_grading(self, user_client, quiz):
+        question, wrong, data = self._submit_wrong(user_client, quiz)
+        question.explanation = "Spoofed senders are a classic phishing signal."
+        question.save()
+
+        response = user_client.get(reverse("quiz-attempts-detail", args=[data["id"]]))
+
+        assert response.status_code == 200
+        row = response.json()["answers"][0]
+        assert row["is_correct"] is False
+        assert row["selected_text"] == wrong.text
+        assert row["correct_answer_text"] == "Yes"
+        assert row["explanation"] == "Spoofed senders are a classic phishing signal."
+        assert row["competency"] == question.competency
+
+    def test_result_includes_pass_mark_and_lesson_to_review(self, user_client, quiz):
+        _, _, data = self._submit_wrong(user_client, quiz)
+
+        body = user_client.get(reverse("quiz-attempts-detail", args=[data["id"]])).json()
+
+        assert body["pass_score"] == quiz.pass_score
+        assert body["lesson_slug"] == quiz.lesson.slug
+        assert body["lesson_title"] == quiz.lesson.title
+
+    def test_result_for_quiz_without_lesson_omits_lesson_fields(self, user_client, quiz):
+        quiz.lesson = None
+        quiz.save()
+        _, _, data = self._submit_wrong(user_client, quiz)
+
+        body = user_client.get(reverse("quiz-attempts-detail", args=[data["id"]])).json()
+
+        assert "lesson_slug" not in body
+
+    def test_unanswered_question_has_no_selected_text_but_shows_correct_answer(self, user_client, quiz):
+        answered = quiz.questions.first()
+        skipped = quiz.questions.create(prompt="Skipped question?", points=1, order=5)
+        skipped.answers.create(text="Yes", is_correct=True, order=0)
+        skipped.answers.create(text="No", is_correct=False, order=1)
+        data = user_client.post(
+            reverse("quizzes-submit", args=[quiz.id]),
+            {"answers": [{"question_id": answered.id, "answer_id": answered.answers.get(is_correct=True).id}]},
+            format="json",
+        ).json()["data"]
+
+        rows = user_client.get(reverse("quiz-attempts-detail", args=[data["id"]])).json()["answers"]
+        row = next(item for item in rows if item["question"] == skipped.id)
+
+        assert row["selected_answer"] is None
+        assert "selected_text" not in row
+        assert row["correct_answer_text"] == "Yes"
+
+    def test_other_user_cannot_open_someone_elses_result(self, user_client, other_normal_user, api_client, quiz):
+        _, _, data = self._submit_wrong(user_client, quiz)
+        api_client.force_authenticate(user=other_normal_user)
+
+        response = api_client.get(reverse("quiz-attempts-detail", args=[data["id"]]))
+
+        assert response.status_code == 404
+
+    def test_attempt_detail_does_not_query_per_answer(self, user_client, quiz, django_assert_max_num_queries):
+        for index in range(6):
+            question = quiz.questions.create(prompt=f"Extra {index}?", points=1)
+            question.answers.create(text="Right", is_correct=True, order=0)
+            question.answers.create(text="Wrong", is_correct=False, order=1)
+        first = quiz.questions.first()
+        data = user_client.post(
+            reverse("quizzes-submit", args=[quiz.id]),
+            {"answers": [{"question_id": first.id, "answer_id": first.answers.first().id}]},
+            format="json",
+        ).json()["data"]
+
+        with django_assert_max_num_queries(10):
+            response = user_client.get(reverse("quiz-attempts-detail", args=[data["id"]]))
+
+        assert response.status_code == 200
+        assert len(response.json()["answers"]) == 7

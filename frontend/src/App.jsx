@@ -10,6 +10,7 @@ import DashboardPage from "./pages/dashboard/DashboardPage.jsx";
 import TrainingPage from "./pages/training/TrainingPage.jsx";
 import LessonDetailPage from "./pages/training/LessonDetailPage.jsx";
 import QuizListPage from "./pages/quizzes/QuizListPage.jsx";
+import QuizResultsPage from "./pages/quizzes/QuizResultsPage.jsx";
 import QuizTakePage from "./pages/quizzes/QuizTakePage.jsx";
 import PhishingSimulatorPage from "./pages/phishing/PhishingSimulatorPage.jsx";
 import IncidentReportPage from "./pages/incidents/IncidentReportPage.jsx";
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="/training/:slug" element={<LessonDetailPage />} />
         <Route path="/quizzes" element={<QuizListPage />} />
         <Route path="/quizzes/:id" element={<QuizTakePage />} />
+        <Route path="/quizzes/results/:attemptId" element={<QuizResultsPage />} />
         <Route path="/phishing" element={<PhishingSimulatorPage />} />
         <Route path="/incidents" element={<IncidentTrackerPage />} />
         <Route path="/incidents/new" element={<IncidentReportPage />} />

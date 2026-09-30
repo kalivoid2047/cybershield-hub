@@ -73,6 +73,9 @@ export const trainingService = {
 };
 
 export const quizService = {
+  attempt: (id) => apiClient.get(`/quizzes/attempts/${id}/`).then(unwrap),
+  // Opens (or resumes) a server-side attempt so duration is measured from when the quiz was opened.
+  start: (id) => withFallback(() => apiClient.post(`/quizzes/quizzes/${id}/start/`), () => ({ id: null })),
   list: () => withFallback(() => apiClient.get("/quizzes/quizzes/"), quizzes),
   detail: (id) => withFallback(() => apiClient.get(`/quizzes/quizzes/${id}/`), quizzes.find((quiz) => String(quiz.id) === String(id)) || quizzes[0]),
   submit: (id, payload) =>

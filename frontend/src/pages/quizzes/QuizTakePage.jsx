@@ -1,23 +1,35 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, Clock, Send } from "lucide-react";
-import { motion } from "framer-motion";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, Clock, Send } from "lucide-react";
 import Button from "../../components/common/Button.jsx";
 import Card from "../../components/common/Card.jsx";
 import PageHeader from "../../components/common/PageHeader.jsx";
 import ProgressBar from "../../components/common/ProgressBar.jsx";
-import RadarScoreChart from "../../components/charts/RadarScoreChart.jsx";
 import { quizService } from "../../services/cyberShieldApi.js";
 
 export default function QuizTakePage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [quiz, setQuiz] = useState(null);
   const [answers, setAnswers] = useState({});
-  const [result, setResult] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [attemptId, setAttemptId] = useState(null);
   const [seconds, setSeconds] = useState(0);
 
   useEffect(() => {
-    quizService.detail(id).then(setQuiz);
+    quizService.detail(id).then((data) => {
+      setQuiz(data);
+      quizService
+        .start(id)
+        .then((attempt) => {
+          setAttemptId(attempt.id);
+          // Resumed attempts carry their original start time; clamp to guard against clock skew.
+          const elapsed = Math.floor((Date.now() - Date.parse(attempt.started_at)) / 1000);
+          if (Number.isFinite(elapsed)) setSeconds(Math.max(0, Math.min(elapsed, (data.time_limit_minutes || 10) * 60)));
+        })
+        // The quiz still works without a started attempt; it just won't record a duration.
+        .catch(() => setAttemptId(null));
+    });
   }, [id]);
 
   useEffect(() => {
@@ -32,18 +44,22 @@ export default function QuizTakePage() {
 
   async function submit() {
     const payload = {
+      ...(attemptId ? { attempt_id: attemptId } : {}),
       answers: Object.entries(answers).map(([question_id, answer_id]) => ({
         question_id: Number(question_id),
         answer_id: Number(answer_id),
       })),
     };
-    setResult(await quizService.submit(id, payload));
+    setSubmitting(true);
+    try {
+      const result = await quizService.submit(id, payload);
+      navigate(`/quizzes/results/${result.id}`, { state: { result } });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (!quiz) return null;
-
-  const radarLabels = result ? Object.keys(result.weakness_map || {}) : [];
-  const radarValues = radarLabels.map((label) => result.weakness_map[label].score || 0);
 
   return (
     <div>
@@ -107,31 +123,11 @@ export default function QuizTakePage() {
               </div>
               <ProgressBar value={completion} />
             </div>
-            <Button className="mt-5 w-full" disabled={completion < 100} onClick={submit}>
+            <Button className="mt-5 w-full" disabled={completion < 100 || submitting} onClick={submit}>
               <Send className="h-4 w-4" />
-              Submit
+              {submitting ? "Submitting..." : "Submit"}
             </Button>
           </Card>
-          {result && (
-            <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}>
-              <Card>
-                <div className="text-center">
-                  <CheckCircle2 className="mx-auto h-10 w-10 text-mint" />
-                  <p className="mt-3 text-5xl font-bold text-white">{Math.round(result.score)}%</p>
-                  <p className="mt-2 text-sm text-slate-400">{result.passed ? "Passed" : "Needs review"}</p>
-                </div>
-                {radarLabels.length > 0 && <RadarScoreChart labels={radarLabels} values={radarValues} />}
-                <div className="mt-4 space-y-2">
-                  {result.recommendations?.slice(0, 3).map((item) => (
-                    <p key={item.competency} className="rounded-md border border-white/10 bg-white/[0.035] p-3 text-sm text-slate-300">
-                      <span className="font-semibold text-cyanx">{item.competency}: </span>
-                      {item.recommendation}
-                    </p>
-                  ))}
-                </div>
-              </Card>
-            </motion.div>
-          )}
         </aside>
       </div>
     </div>
