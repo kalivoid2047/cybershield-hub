@@ -47,7 +47,25 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ["created_at", "read_at"]
 
     def get_queryset(self):
+        self._backfill(self.request.user)
         return Notification.objects.filter(user=self.request.user).select_related("alert")
+
+    @staticmethod
+    def _backfill(user):
+        """Give the user notifications for live alerts published before they existed.
+
+        Fan-out only reaches people who have an account when an alert is created, so a
+        newly registered user (or one whose role changed) would otherwise see none of the
+        standing advisories and tips.
+        """
+        now = timezone.now()
+        missing = (
+            SecurityAlert.objects.filter(is_active=True, starts_at__lte=now)
+            .filter(Q(expires_at__isnull=True) | Q(expires_at__gte=now))
+            .filter(Q(audience_role="") | Q(audience_role=user.role_code))
+            .exclude(notifications__user=user)
+        )
+        Notification.objects.bulk_create([Notification(user=user, alert=alert, is_read=False) for alert in missing], ignore_conflicts=True)
 
     @action(detail=True, methods=["post"])
     def read(self, request, pk=None):

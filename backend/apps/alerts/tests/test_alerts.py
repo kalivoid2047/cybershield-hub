@@ -104,3 +104,45 @@ class TestNotifications:
 
         assert response.status_code == 200
         assert Notification.objects.filter(user=normal_user, is_read=False).count() == 0
+
+
+class TestNotificationBackfill:
+    def test_new_user_receives_alerts_published_before_they_joined(self, api_client, roles, admin_client):
+        from apps.users.models import User
+
+        admin_client.post(reverse("security-alerts-list"), {"title": "Standing advisory", "body": "Read me", "priority": "high", "alert_type": "threat_advisory"}, format="json")
+        late_joiner = User.objects.create_user(username="late", email="late@cybershield.local", password="Str0ngPassw0rd!", role=roles["normal_user"], is_active=True)
+        api_client.force_authenticate(user=late_joiner)
+
+        response = api_client.get(reverse("notifications-list"))
+
+        titles = [item["alert"]["title"] for item in response.json()["results"]]
+        assert "Standing advisory" in titles
+
+    def test_backfill_respects_audience_and_does_not_duplicate(self, api_client, roles, admin_client, user_client, normal_user):
+        from apps.alerts.models import Notification
+        from apps.users.models import User
+
+        admin_client.post(reverse("security-alerts-list"), {"title": "Officers only", "body": "x", "priority": "info", "alert_type": "announcement", "audience_role": "cybersecurity_officer"}, format="json")
+        late_learner = User.objects.create_user(username="late2", email="late2@cybershield.local", password="Str0ngPassw0rd!", role=roles["normal_user"], is_active=True)
+        api_client.force_authenticate(user=late_learner)
+
+        first = api_client.get(reverse("notifications-list")).json()["results"]
+        api_client.get(reverse("notifications-list"))
+
+        assert first == []
+        assert Notification.objects.filter(user=late_learner).count() == 0
+
+    def test_expired_alerts_are_not_backfilled(self, api_client, roles, admin_user):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        from apps.alerts.models import SecurityAlert
+        from apps.users.models import User
+
+        SecurityAlert.objects.create(title="Old news", body="x", priority="info", alert_type="announcement", expires_at=timezone.now() - timedelta(days=1), created_by=admin_user)
+        late = User.objects.create_user(username="late3", email="late3@cybershield.local", password="Str0ngPassw0rd!", role=roles["normal_user"], is_active=True)
+        api_client.force_authenticate(user=late)
+
+        assert api_client.get(reverse("notifications-list")).json()["results"] == []

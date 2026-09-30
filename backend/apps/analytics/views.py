@@ -46,8 +46,10 @@ class OrganizationAnalyticsView(APIView):
         now = timezone.now()
         thirty_days_ago = now - timedelta(days=30)
         users = User.objects.filter(is_active=True).count()
-        completed = LessonProgress.objects.filter(completed_at__isnull=False).count()
-        total_progress = LessonProgress.objects.count()
+        completed = LessonProgress.objects.filter(completed_at__isnull=False, user__is_active=True, lesson__is_published=True).count()
+        # Out of every lesson each active user could complete, not just the ones they started;
+        # dividing by started lessons reads 100% as soon as nobody has abandoned one.
+        possible_completions = users * Lesson.objects.filter(is_published=True).count()
         quiz_avg = QuizAttempt.objects.filter(completed_at__isnull=False).aggregate(value=Avg("score"))["value"] or 0
         phishing_avg = PhishingAttempt.objects.aggregate(value=Avg("score"))["value"] or 0
         incidents_30d = Incident.objects.filter(created_at__gte=thirty_days_ago).count()
@@ -56,7 +58,7 @@ class OrganizationAnalyticsView(APIView):
         return ok(
             {
                 "active_users": users,
-                "training_completion_rate": round((completed / total_progress) * 100, 2) if total_progress else 0,
+                "training_completion_rate": round((completed / possible_completions) * 100, 2) if possible_completions else 0,
                 "quiz_average": round(float(quiz_avg), 2),
                 "phishing_average": round(float(phishing_avg), 2),
                 "incidents_30d": incidents_30d,

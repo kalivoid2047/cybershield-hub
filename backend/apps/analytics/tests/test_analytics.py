@@ -62,3 +62,24 @@ class TestChartAnalytics:
         data = response.json()["data"]
         for key in ["incident_trends", "incident_severity", "quiz_performance", "phishing_awareness", "training_by_category", "engagement"]:
             assert key in data
+
+
+class TestTrainingCompletionRate:
+    def test_rate_is_out_of_all_lessons_each_active_user_could_finish(self, officer_client, published_lesson, normal_user, officer_user):
+        from apps.training.models import LessonProgress
+
+        LessonProgress.objects.create(user=normal_user, lesson=published_lesson).mark_progress(100)
+
+        data = officer_client.get(reverse("analytics-organization")).json()["data"]
+
+        # 2 active users x 1 published lesson = 2 possible completions, 1 achieved.
+        assert data["training_completion_rate"] == 50.0
+
+    def test_started_but_unfinished_lessons_do_not_inflate_the_rate(self, officer_client, published_lesson, normal_user):
+        from apps.training.models import LessonProgress
+
+        LessonProgress.objects.create(user=normal_user, lesson=published_lesson).mark_progress(40)
+
+        data = officer_client.get(reverse("analytics-organization")).json()["data"]
+
+        assert data["training_completion_rate"] == 0
