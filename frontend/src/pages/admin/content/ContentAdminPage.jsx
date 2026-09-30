@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { BookOpen, BrainCircuit, FileWarning, Pencil, Plus, Trash2 } from "lucide-react";
+import { BookOpen, BrainCircuit, FileWarning, FolderTree, Pencil, Plus, Trash2 } from "lucide-react";
 import clsx from "clsx";
 import Button from "../../../components/common/Button.jsx";
 import Card from "../../../components/common/Card.jsx";
@@ -16,6 +16,7 @@ import useAsync from "../../../hooks/useAsync.js";
 import { contentService } from "../../../services/cyberShieldApi.js";
 import { errorMessage } from "../../../utils/errors.js";
 import { titleCase } from "../../../utils/formatters.js";
+import CategoriesPanel from "./CategoriesPanel.jsx";
 
 // One config per content type keeps the three tabs behaving identically.
 const TYPES = {
@@ -211,24 +212,30 @@ function ContentList({ typeKey }) {
 
 export default function ContentAdminPage() {
   const [params, setParams] = useSearchParams();
-  const tab = TYPES[params.get("tab")] ? params.get("tab") : "lessons";
+  const requested = params.get("tab");
+  const tab = TYPES[requested] || requested === "categories" ? requested : "lessons";
+  const isCategories = tab === "categories";
   const type = TYPES[tab];
+  // Categories are managed in their own panel, so they get a tab beside the content types.
+  const tabs = [...Object.entries(TYPES), ["categories", { label: "Categories", icon: FolderTree }]];
 
   return (
     <div>
       <PageHeader
         eyebrow="Administration"
         title="Content Library"
-        description="Create and manage the lessons, quizzes and phishing simulations your learners see."
+        description="Create and manage the lessons, quizzes, phishing simulations and categories your learners see."
         actions={
-          <Button as={Link} to={type.newTo}>
-            <Plus className="h-4 w-4" />
-            New {type.singular}
-          </Button>
+          !isCategories && (
+            <Button as={Link} to={type.newTo}>
+              <Plus className="h-4 w-4" />
+              New {type.singular}
+            </Button>
+          )
         }
       />
       <div role="tablist" aria-label="Content type" className="glass-tile mb-6 inline-flex flex-wrap gap-1 rounded-2xl p-1">
-        {Object.entries(TYPES).map(([key, config]) => (
+        {tabs.map(([key, config]) => (
           <button
             key={key}
             type="button"
@@ -248,7 +255,7 @@ export default function ContentAdminPage() {
         ))}
       </div>
       <div id="content-panel" role="tabpanel" aria-labelledby={`tab-${tab}`}>
-        <ContentList key={tab} typeKey={tab} />
+        {isCategories ? <CategoriesPanel /> : <ContentList key={tab} typeKey={tab} />}
       </div>
     </div>
   );

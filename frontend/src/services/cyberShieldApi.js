@@ -231,6 +231,8 @@ export const adminService = {
 export const contentService = {
   categories: () => apiClient.get("/training/categories/", { params: { page_size: 100 } }).then(unwrap),
   createCategory: (payload) => apiClient.post("/training/categories/", payload).then(unwrap),
+  updateCategory: (id, patch) => apiClient.patch(`/training/categories/${id}/`, patch).then(unwrap),
+  deleteCategory: (id) => apiClient.delete(`/training/categories/${id}/`),
 
   lessons: () => apiClient.get("/training/lessons/", { params: { page_size: 100 } }).then(unwrap),
   lesson: (slug) => apiClient.get(`/training/lessons/${slug}/`).then(unwrap),
