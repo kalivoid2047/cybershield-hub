@@ -16,6 +16,7 @@ class LessonSerializer(serializers.ModelSerializer):
     category_id = serializers.PrimaryKeyRelatedField(queryset=LessonCategory.objects.all(), source="category", write_only=True)
     progress_percent = serializers.SerializerMethodField()
     is_bookmarked = serializers.SerializerMethodField()
+    quizzes = serializers.SerializerMethodField()
 
     class Meta:
         model = Lesson
@@ -35,9 +36,16 @@ class LessonSerializer(serializers.ModelSerializer):
             "recommended_for_roles",
             "progress_percent",
             "is_bookmarked",
+            "quizzes",
             "created_at",
             "updated_at",
         ]
+
+    def get_quizzes(self, obj):
+        quizzes = getattr(obj, "active_quizzes", None)
+        if quizzes is None:
+            quizzes = obj.quizzes.filter(is_active=True)
+        return [{"id": quiz.id, "title": quiz.title, "slug": quiz.slug} for quiz in quizzes]
 
     def get_progress_percent(self, obj):
         user = self.context["request"].user

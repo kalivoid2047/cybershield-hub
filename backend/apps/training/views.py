@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 
 from apps.common.permissions import IsAdminOrReadOnly
 from apps.common.responses import ok
+from apps.quizzes.models import Quiz
 from apps.training.models import Lesson, LessonBookmark, LessonCategory, LessonProgress
 from apps.training.serializers import LessonBookmarkSerializer, LessonCategorySerializer, LessonProgressSerializer, LessonSerializer
 
@@ -25,7 +26,9 @@ class LessonViewSet(viewsets.ModelViewSet):
     ordering_fields = ["title", "estimated_minutes", "created_at", "updated_at"]
 
     def get_queryset(self):
-        qs = Lesson.objects.select_related("category", "created_by")
+        qs = Lesson.objects.select_related("category", "created_by").prefetch_related(
+            Prefetch("quizzes", queryset=Quiz.objects.filter(is_active=True).order_by("title"), to_attr="active_quizzes")
+        )
         user = self.request.user
         if not (user.is_authenticated and (user.is_staff or user.role_code == "system_admin")):
             qs = qs.filter(is_published=True)

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Bookmark, CheckCircle2, Clock, PlayCircle } from "lucide-react";
+import { ArrowLeft, Bookmark, CheckCircle2, ClipboardCheck, Clock, PlayCircle } from "lucide-react";
 import Button from "../../components/common/Button.jsx";
 import Card from "../../components/common/Card.jsx";
 import MarkdownContent from "../../components/common/MarkdownContent.jsx";
@@ -100,6 +100,19 @@ export default function LessonDetailPage() {
               {progress >= 100 ? "Completed" : saving ? "Saving..." : "Mark complete"}
             </Button>
           </Card>
+          {lesson.quizzes?.length > 0 && (
+            <Card>
+              <h2 className="font-semibold text-white">Test your knowledge</h2>
+              <div className="mt-4 space-y-3">
+                {lesson.quizzes.map((quiz) => (
+                  <Button key={quiz.id} as={Link} to={`/quizzes/${quiz.id}`} variant="secondary" className="w-full">
+                    <ClipboardCheck className="h-4 w-4" />
+                    Take quiz{lesson.quizzes.length > 1 ? `: ${quiz.title}` : ""}
+                  </Button>
+                ))}
+              </div>
+            </Card>
+          )}
           <Card>
             <h2 className="font-semibold text-white">Tags</h2>
             <div className="mt-4 flex flex-wrap gap-2">

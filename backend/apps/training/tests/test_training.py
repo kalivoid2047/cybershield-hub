@@ -124,3 +124,34 @@ class TestRecommendedLessons:
         assert response.status_code == 200
         slugs = {item["slug"] for item in response.json()["data"]}
         assert published_lesson.slug in slugs
+
+
+class TestLessonQuizzes:
+    def test_lesson_detail_lists_its_active_quizzes(self, user_client, published_lesson, quiz):
+        inactive = quiz.__class__.objects.create(title="Retired", slug="retired-quiz", lesson=published_lesson, is_active=False)
+
+        response = user_client.get(reverse("lessons-detail", args=[published_lesson.slug]))
+
+        assert response.status_code == 200
+        quizzes = response.json()["quizzes"]
+        assert [item["id"] for item in quizzes] == [quiz.id]
+        assert inactive.id not in [item["id"] for item in quizzes]
+
+    def test_lesson_without_quiz_returns_empty_list(self, user_client, published_lesson):
+        response = user_client.get(reverse("lessons-detail", args=[published_lesson.slug]))
+        assert response.json()["quizzes"] == []
+
+    def test_lesson_list_fetches_quizzes_in_one_query(self, user_client, lesson_category):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        for index in range(5):
+            Lesson.objects.create(
+                category=lesson_category, title=f"L{index}", slug=f"l-{index}", summary="s", content="c", is_published=True,
+            )
+        with CaptureQueriesContext(connection) as queries:
+            response = user_client.get(reverse("lessons-list"))
+
+        assert response.status_code == 200
+        quiz_queries = [q for q in queries.captured_queries if 'FROM "quizzes"' in q["sql"]]
+        assert len(quiz_queries) == 1

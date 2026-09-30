@@ -69,6 +69,10 @@ class TestQuizContentDefinitions:
         assert len(slugs) == len(set(slugs))
         assert all(SLUG_RE.match(slug) for slug in slugs)
 
+    def test_every_lesson_has_a_quiz(self):
+        """Every lesson page shows a Take quiz button, so each lesson needs at least one quiz."""
+        assert {lesson["slug"] for lesson in LESSONS} <= {quiz["lesson"] for quiz in QUIZZES}
+
     def test_every_category_has_a_quiz(self):
         assert {quiz["category"] for quiz in QUIZZES} == CATEGORY_SLUGS
 
