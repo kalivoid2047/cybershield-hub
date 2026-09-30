@@ -44,6 +44,7 @@ frontend/
     components/           cards, charts, badges, kanban, layout primitives
     services/             Axios API wrappers (with dev-only fallback data)
     api/                  Axios client with JWT interceptors
+mobile/                   Flutter app for learners and incident reporters (see mobile/README.md)
 docs/                     architecture diagrams, API map, MySQL schema reference
 ```
 
