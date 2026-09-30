@@ -1,6 +1,7 @@
 from django.db.models import Count, Prefetch
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 
 from apps.common.permissions import IsAdminOrReadOnly
 from apps.common.responses import ok
@@ -10,11 +11,20 @@ from apps.training.serializers import LessonBookmarkSerializer, LessonCategorySe
 
 
 class LessonCategoryViewSet(viewsets.ModelViewSet):
-    queryset = LessonCategory.objects.annotate(lesson_count=Count("lessons"))
+    # Ordered explicitly: an aggregate annotation drops the model's default ordering.
+    queryset = LessonCategory.objects.annotate(lesson_count=Count("lessons")).order_by("order", "name", "id")
     serializer_class = LessonCategorySerializer
     permission_classes = [IsAdminOrReadOnly]
     search_fields = ["name", "description"]
     ordering_fields = ["order", "name", "created_at"]
+
+    def perform_destroy(self, instance):
+        # Lessons protect their category; surface that as a clear message instead of a 500.
+        count = instance.lessons.count()
+        if count:
+            noun = "lesson" if count == 1 else "lessons"
+            raise ValidationError({"detail": f"This category still has {count} {noun}. Move or delete them before deleting the category."})
+        instance.delete()
 
 
 class LessonViewSet(viewsets.ModelViewSet):

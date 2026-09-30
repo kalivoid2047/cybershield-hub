@@ -1,3 +1,5 @@
+import re
+
 from rest_framework import serializers
 
 from apps.common.slugs import unique_slug
@@ -9,7 +11,24 @@ class LessonCategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = LessonCategory
+        extra_kwargs = {"slug": {"required": False}}
         fields = ["id", "name", "slug", "description", "icon", "color", "order", "lesson_count", "created_at", "updated_at"]
+
+    def validate_name(self, value):
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError("Give the category a name.")
+        return value
+
+    def validate_color(self, value):
+        if not re.fullmatch(r"#[0-9a-fA-F]{6}", value or ""):
+            raise serializers.ValidationError("Use a hex colour such as #38bdf8.")
+        return value
+
+    def create(self, validated_data):
+        if not validated_data.get("slug"):
+            validated_data["slug"] = unique_slug(LessonCategory, validated_data["name"], max_length=140, fallback="category")
+        return super().create(validated_data)
 
 
 class LessonSerializer(serializers.ModelSerializer):
