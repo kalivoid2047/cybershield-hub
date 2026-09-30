@@ -22,7 +22,7 @@ class QuizViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         # distinct=True: the questions and attempts joins would otherwise multiply each other's counts.
-        qs = Quiz.objects.annotate(question_count=Count("questions", distinct=True)).prefetch_related("questions__answers")
+        qs = Quiz.objects.annotate(question_count=Count("questions", distinct=True)).prefetch_related("questions__answers").order_by("title", "id")
         if self.request.user.is_authenticated:
             qs = qs.annotate(
                 best_score=Max("attempts__score", filter=Q(attempts__user=self.request.user)),

@@ -17,7 +17,7 @@ class PhishingSimulationViewSet(viewsets.ModelViewSet):
     ordering_fields = ["title", "difficulty", "created_at"]
 
     def get_queryset(self):
-        qs = PhishingSimulation.objects.annotate(attempt_count=Count("attempts"), latest_score=Max("attempts__score"))
+        qs = PhishingSimulation.objects.annotate(attempt_count=Count("attempts"), latest_score=Max("attempts__score")).order_by("difficulty", "title", "id")
         if self.request.method == "GET" and not self.request.user.is_staff:
             qs = qs.filter(is_active=True)
         return qs

@@ -241,6 +241,32 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         return user
 
 
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True, style={"input_type": "password"})
+    password = serializers.CharField(write_only=True, min_length=10, style={"input_type": "password"})
+    password_confirm = serializers.CharField(write_only=True, style={"input_type": "password"})
+
+    def validate_current_password(self, value):
+        if not self.context["request"].user.check_password(value):
+            raise serializers.ValidationError("Your current password is incorrect.")
+        return value
+
+    def validate(self, attrs):
+        if attrs["password"] != attrs["password_confirm"]:
+            raise serializers.ValidationError({"password_confirm": "Passwords do not match."})
+        if attrs["password"] == attrs["current_password"]:
+            raise serializers.ValidationError({"password": "Choose a password you have not used before."})
+        password_validation.validate_password(attrs["password"], user=self.context["request"].user)
+        return attrs
+
+    def save(self, **kwargs):
+        user = self.context["request"].user
+        user.set_password(self.validated_data["password"])
+        user.password_changed_at = timezone.now()
+        user.save(update_fields=["password", "password_changed_at"])
+        return user
+
+
 class EmailVerifySerializer(serializers.Serializer):
     token = serializers.UUIDField()
 

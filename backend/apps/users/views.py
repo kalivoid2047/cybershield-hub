@@ -14,6 +14,7 @@ from apps.common.responses import ok
 from apps.users.models import AccountSession, EmailVerificationToken, PasswordResetToken, Role, User
 from apps.users.serializers import (
     AccountSessionSerializer,
+    ChangePasswordSerializer,
     EmailVerifySerializer,
     LoginSerializer,
     MeSerializer,
@@ -118,6 +119,17 @@ class MeView(APIView):
         return ok(serializer.data, "Profile updated.")
 
 
+class ChangePasswordView(APIView):
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth"
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return ok(message="Password changed.")
+
+
 class PasswordResetRequestView(APIView):
     permission_classes = [permissions.AllowAny]
     throttle_classes = [ScopedRateThrottle]
@@ -165,7 +177,7 @@ class RoleViewSet(viewsets.ModelViewSet):
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.select_related("role").all()
+    queryset = User.objects.select_related("role").order_by("-date_joined", "id")
     serializer_class = UserSerializer
     permission_classes = [IsSystemAdmin]
     filterset_fields = ["role__code", "is_active", "is_email_verified", "organization", "department"]

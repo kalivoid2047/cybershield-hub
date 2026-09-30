@@ -39,7 +39,7 @@ class IncidentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = Incident.objects.select_related("category", "reporter", "reporter__role", "assigned_to", "assigned_to__role").prefetch_related(
             "attachments", "updates", "updates__actor"
-        ).annotate(attachment_count=Count("attachments"))
+        ).annotate(attachment_count=Count("attachments")).order_by("-created_at", "-id")
         if self.request.user.role_code in {Role.SYSTEM_ADMIN, Role.CYBERSECURITY_OFFICER}:
             return qs
         return qs.filter(reporter=self.request.user)

@@ -2,6 +2,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from apps.incidents.models import Incident, IncidentAssignment, IncidentAttachment, IncidentCategory, IncidentUpdate
+from apps.users.models import Role
 from apps.users.serializers import UserSerializer
 
 
@@ -66,10 +67,17 @@ class IncidentListSerializer(serializers.ModelSerializer):
 class IncidentDetailSerializer(IncidentListSerializer):
     description = serializers.CharField()
     attachments = IncidentAttachmentSerializer(many=True, read_only=True)
-    updates = IncidentUpdateSerializer(many=True, read_only=True)
+    updates = serializers.SerializerMethodField()
 
     class Meta(IncidentListSerializer.Meta):
         fields = IncidentListSerializer.Meta.fields + ["description", "attachments", "updates", "resolved_at", "closed_at"]
+
+    def get_updates(self, obj):
+        # Internal notes (assignment chatter, triage remarks) are for the response team only.
+        request = self.context.get("request")
+        is_staff_role = bool(request and request.user.is_authenticated and request.user.role_code in {Role.SYSTEM_ADMIN, Role.CYBERSECURITY_OFFICER})
+        updates = [update for update in obj.updates.all() if is_staff_role or not update.is_internal]
+        return IncidentUpdateSerializer(updates, many=True, context=self.context).data
 
 
 class IncidentCreateUpdateSerializer(serializers.ModelSerializer):
