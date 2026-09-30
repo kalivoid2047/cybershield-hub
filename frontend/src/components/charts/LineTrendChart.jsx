@@ -1,9 +1,9 @@
 import { Line } from "react-chartjs-2";
-import { chartOptions } from "./ChartShell.jsx";
+import { chartOptions, ChartFrame } from "./ChartShell.jsx";
 
 export default function LineTrendChart({ labels, values, label = "Incidents" }) {
   return (
-    <div className="h-72">
+    <ChartFrame labels={labels} values={values} label={label}>
       <Line
         options={{
           ...chartOptions,
@@ -24,6 +24,6 @@ export default function LineTrendChart({ labels, values, label = "Incidents" }) 
           ],
         }}
       />
-    </div>
+    </ChartFrame>
   );
 }

@@ -5,6 +5,7 @@ import Button from "../../components/common/Button.jsx";
 import Card from "../../components/common/Card.jsx";
 import PageHeader from "../../components/common/PageHeader.jsx";
 import RadarScoreChart from "../../components/charts/RadarScoreChart.jsx";
+import { Skeleton } from "../../components/common/Skeleton.jsx";
 import { quizService } from "../../services/cyberShieldApi.js";
 
 // Competency bands: below WEAK needs focused review, below STRONG is developing.
@@ -31,12 +32,13 @@ export default function QuizResultsPage() {
   const [result, setResult] = useState(location.state?.result || null);
   const [error, setError] = useState(false);
   const [onlyMissed, setOnlyMissed] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (result && String(result.id) === String(attemptId)) return;
     setError(false);
     quizService.attempt(attemptId).then(setResult).catch(() => setError(true));
-  }, [attemptId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [attemptId, reloadKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const competencies = useMemo(
     () =>
@@ -48,16 +50,34 @@ export default function QuizResultsPage() {
 
   if (error) {
     return (
-      <Card>
-        <p className="text-slate-300">We couldn't load these results. They may belong to another account.</p>
-        <Button as={Link} to="/quizzes" variant="secondary" className="mt-4">
-          <ArrowLeft className="h-4 w-4" />
-          Back to quizzes
-        </Button>
-      </Card>
+      <div>
+        <PageHeader eyebrow="Quiz results" title="Results unavailable" />
+        <Card>
+          <p className="text-slate-300">We could not load these results. They may belong to another account, or the connection dropped.</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Button onClick={() => setReloadKey((value) => value + 1)}>Try again</Button>
+            <Button as={Link} to="/quizzes" variant="secondary">
+              <ArrowLeft className="h-4 w-4" />
+              Back to quizzes
+            </Button>
+          </div>
+        </Card>
+      </div>
     );
   }
-  if (!result) return null;
+  if (!result) {
+    return (
+      <div role="status" aria-live="polite">
+        <span className="sr-only">Loading results…</span>
+        <Skeleton className="mb-3 h-4 w-32" />
+        <Skeleton className="mb-8 h-9 w-72" />
+        <div className="grid gap-6 xl:grid-cols-[340px_1fr]">
+          <Skeleton className="h-80" />
+          <Skeleton className="h-80" />
+        </div>
+      </div>
+    );
+  }
 
   const weakAreas = competencies.filter((item) => item.score < STRONG);
   const answers = result.answers || [];

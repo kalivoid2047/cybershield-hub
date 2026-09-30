@@ -1,43 +1,20 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import {
-  Activity,
-  BarChart3,
-  Bell,
-  BookOpen,
-  BrainCircuit,
-  ClipboardList,
-  FileWarning,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  ShieldCheck,
-  SlidersHorizontal,
-  Users,
-  X,
-} from "lucide-react";
-import { useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Bell, LogOut, Menu, ShieldCheck, X } from "lucide-react";
 import clsx from "clsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
+import { AlertsProvider, useAlerts } from "../contexts/AlertsContext.jsx";
+import useMediaQuery from "../hooks/useMediaQuery.js";
 import { initials } from "../utils/formatters.js";
+import { navGroups, sectionFor } from "./navigation.js";
 
-const navItems = [
-  { label: "Command", to: "/", icon: LayoutDashboard },
-  { label: "Training", to: "/training", icon: BookOpen },
-  { label: "Quizzes", to: "/quizzes", icon: BrainCircuit },
-  { label: "Phishing", to: "/phishing", icon: FileWarning },
-  { label: "Incidents", to: "/incidents", icon: ClipboardList },
-  { label: "SOC Queue", to: "/soc", icon: Activity, roles: ["cybersecurity_officer", "system_admin"] },
-  { label: "Analytics", to: "/analytics", icon: BarChart3, roles: ["cybersecurity_officer", "system_admin"] },
-  { label: "Alerts", to: "/alerts", icon: Bell },
-  { label: "Users", to: "/admin/users", icon: Users, roles: ["system_admin"] },
-  { label: "Quiz Settings", to: "/admin/quizzes", icon: SlidersHorizontal, roles: ["system_admin"] },
-  { label: "Audit", to: "/admin/audit", icon: ShieldCheck, roles: ["cybersecurity_officer", "system_admin"] },
-];
-
-function Sidebar({ open, onClose }) {
+function Sidebar({ open, isDesktop, onClose, closeRef }) {
   const { user, role, logout } = useAuth();
+  const { unread } = useAlerts();
   const navigate = useNavigate();
-  const visibleItems = navItems.filter((item) => !item.roles || item.roles.includes(role));
+  // While the drawer is closed on small screens it is only translated off
+  // screen, so it must also be made inert or its links stay in the tab order.
+  const hidden = !isDesktop && !open;
 
   async function handleLogout() {
     await logout();
@@ -46,49 +23,68 @@ function Sidebar({ open, onClose }) {
 
   return (
     <aside
+      id="app-sidebar"
+      inert={hidden ? "" : undefined}
       className={clsx(
-        "fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-white/10 bg-void/95 p-4 backdrop-blur-xl transition lg:sticky lg:top-0 lg:h-screen lg:translate-x-0",
+        "fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-white/10 bg-void/95 p-4 backdrop-blur-xl transition motion-reduce:transition-none lg:sticky lg:top-0 lg:h-screen lg:translate-x-0",
         open ? "translate-x-0" : "-translate-x-full",
       )}
     >
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-6 flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-md border border-cyanx/30 bg-cyanx/12 text-cyanx shadow-glow">
-            <ShieldCheck className="h-6 w-6" />
+            <ShieldCheck className="h-6 w-6" aria-hidden="true" />
           </div>
           <div>
             <p className="text-lg font-bold text-white">CyberShield</p>
             <p className="text-xs text-slate-400">Hub</p>
           </div>
         </div>
-        <button className="focus-ring rounded-md p-2 text-slate-300 lg:hidden" onClick={onClose} type="button" aria-label="Close navigation">
+        <button ref={closeRef} className="focus-ring rounded-md p-2 text-slate-300 lg:hidden" onClick={() => onClose(true)} type="button" aria-label="Close navigation">
           <X className="h-5 w-5" />
         </button>
       </div>
 
-      <nav className="flex-1 space-y-1">
-        {visibleItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.to === "/"}
-            onClick={onClose}
-            className={({ isActive }) =>
-              clsx(
-                "flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition",
-                isActive ? "bg-cyanx/14 text-white shadow-glow" : "text-slate-400 hover:bg-white/7 hover:text-white",
-              )
-            }
-          >
-            <item.icon className="h-4 w-4" />
-            {item.label}
-          </NavLink>
-        ))}
+      <nav aria-label="Main" className="-mr-2 flex-1 space-y-5 overflow-y-auto pr-2">
+        {navGroups.map((group) => {
+          const items = group.items.filter((item) => !item.roles || item.roles.includes(role));
+          if (!items.length) return null;
+          return (
+            <div key={group.label || "root"}>
+              {group.label && <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">{group.label}</p>}
+              <div className="space-y-1">
+                {items.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.to === "/"}
+                    onClick={() => onClose(false)}
+                    className={({ isActive }) =>
+                      clsx(
+                        "flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition",
+                        isActive ? "bg-cyanx/14 text-white shadow-glow" : "text-slate-400 hover:bg-white/7 hover:text-white",
+                      )
+                    }
+                  >
+                    <item.icon className="h-4 w-4" aria-hidden="true" />
+                    <span className="flex-1">{item.label}</span>
+                    {item.badge === "alerts" && unread > 0 && (
+                      <span className="rounded-full bg-danger px-2 py-0.5 text-xs font-bold text-white">
+                        {unread > 99 ? "99+" : unread}
+                        <span className="sr-only"> unread</span>
+                      </span>
+                    )}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </nav>
 
-      <div className="rounded-lg border border-white/10 bg-white/[0.035] p-3">
+      <div className="mt-4 shrink-0 rounded-lg border border-white/10 bg-white/[0.035] p-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-mint/15 text-sm font-bold text-mint">
+          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-mint/15 text-sm font-bold text-mint" aria-hidden="true">
             {initials(user)}
           </div>
           <div className="min-w-0">
@@ -111,36 +107,135 @@ function Sidebar({ open, onClose }) {
   );
 }
 
-export default function AppShell() {
-  const [open, setOpen] = useState(false);
+function ShellHeader({ onOpenNav, menuRef }) {
   const { user } = useAuth();
+  const { unread } = useAlerts();
+  const { pathname } = useLocation();
+  const section = sectionFor(pathname);
+  const score = user?.security_score || 0;
+
+  return (
+    <header className="sticky top-0 z-30 border-b border-white/10 bg-void/75 backdrop-blur-xl">
+      <div className="flex min-h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="flex min-w-0 items-center gap-2">
+          <button
+            ref={menuRef}
+            className="focus-ring -ml-2 rounded-md p-2 text-slate-300 lg:hidden"
+            onClick={onOpenNav}
+            type="button"
+            aria-label="Open navigation"
+            aria-controls="app-sidebar"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <div className="min-w-0">
+            <p className="truncate text-xs text-slate-400">{user?.organization || "CyberShield Hub"}</p>
+            <p className="truncate text-base font-semibold text-white">{section || "CyberShield Hub"}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link
+            to="/"
+            className="focus-ring rounded-md border border-cyanx/20 bg-cyanx/10 px-3 py-2 text-sm text-cyanx"
+            aria-label={`Security score ${score} out of 100, based on training, quizzes, phishing simulations and open incidents`}
+            title="Security score: based on training, quizzes, phishing simulations and open incidents"
+          >
+            <span className="hidden sm:inline">Security score </span>
+            <span className="font-semibold">{score}</span>
+          </Link>
+          <Link
+            to="/alerts"
+            className="focus-ring relative rounded-md border border-white/10 p-2.5 text-slate-300 transition hover:bg-white/8 hover:text-white"
+            aria-label={unread > 0 ? `Alerts, ${unread} unread` : "Alerts"}
+          >
+            <Bell className="h-5 w-5" aria-hidden="true" />
+            {unread > 0 && (
+              <span aria-hidden="true" className="absolute -right-1 -top-1 min-w-5 rounded-full bg-danger px-1 text-center text-[11px] font-bold leading-5 text-white">
+                {unread > 99 ? "99+" : unread}
+              </span>
+            )}
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function Shell() {
+  const [open, setOpen] = useState(false);
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
+  const location = useLocation();
+  const mainRef = useRef(null);
+  const menuRef = useRef(null);
+  const closeRef = useRef(null);
+  const firstRender = useRef(true);
+
+  const closeNav = useCallback((restoreFocus) => {
+    setOpen(false);
+    // Wait a frame: the page behind the drawer is still inert until React re-renders.
+    if (restoreFocus) requestAnimationFrame(() => menuRef.current?.focus());
+  }, []);
+
+  // Route changes: reset scroll and move focus into the page so keyboard and
+  // screen-reader users land at the top of the new content.
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    window.scrollTo(0, 0);
+    const heading = mainRef.current?.querySelector("h1");
+    if (heading) {
+      heading.tabIndex = -1;
+      heading.focus({ preventScroll: true });
+    } else {
+      mainRef.current?.focus({ preventScroll: true });
+    }
+  }, [location.pathname]);
+
+  // Drawer: focus the close button on open, close on Escape, and never keep the
+  // drawer open after the viewport grows into the desktop layout.
+  useEffect(() => {
+    if (!open) return undefined;
+    closeRef.current?.focus();
+    function onKeyDown(event) {
+      if (event.key === "Escape") closeNav(true);
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, closeNav]);
+
+  useEffect(() => {
+    if (isDesktop) setOpen(false);
+  }, [isDesktop]);
+
+  const backgroundInert = !isDesktop && open ? "" : undefined;
 
   return (
     <div className="min-h-screen lg:flex">
-      <Sidebar open={open} onClose={() => setOpen(false)} />
-      {open && <button type="button" aria-label="Close overlay" className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={() => setOpen(false)} />}
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
+      <Sidebar open={open} isDesktop={isDesktop} onClose={closeNav} closeRef={closeRef} />
+      {open && <button type="button" aria-label="Close navigation overlay" className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={() => closeNav(true)} />}
 
-      <main className="relative flex-1 overflow-hidden">
-        <div className="grid-floor pointer-events-none absolute inset-x-0 top-0 h-72" />
-        <header className="sticky top-0 z-30 border-b border-white/10 bg-void/75 backdrop-blur-xl">
-          <div className="flex min-h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-            <button className="focus-ring rounded-md p-2 text-slate-300 lg:hidden" onClick={() => setOpen(true)} type="button" aria-label="Open navigation">
-              <Menu className="h-5 w-5" />
-            </button>
-            <div>
-              <p className="text-sm text-slate-400">Operations console</p>
-              <p className="text-base font-semibold text-white">{user?.organization || "CyberShield Hub"}</p>
-            </div>
-            <div className="hidden items-center gap-3 sm:flex">
-              <div className="rounded-md border border-mint/20 bg-mint/10 px-3 py-2 text-sm text-mint">Risk score {Math.max(0, 100 - (user?.security_score || 0))}</div>
-              <div className="rounded-md border border-cyanx/20 bg-cyanx/10 px-3 py-2 text-sm text-cyanx">Security score {user?.security_score || 0}</div>
-            </div>
-          </div>
-        </header>
-        <div className="relative z-10 px-4 py-6 sm:px-6 lg:px-8">
-          <Outlet />
-        </div>
-      </main>
+      <div className="relative min-w-0 flex-1 overflow-x-clip" inert={backgroundInert}>
+        <div className="grid-floor pointer-events-none absolute inset-x-0 top-0 h-72" aria-hidden="true" />
+        <ShellHeader onOpenNav={() => setOpen(true)} menuRef={menuRef} />
+        <main id="main-content" ref={mainRef} tabIndex={-1} className="relative z-10 px-4 py-6 sm:px-6 lg:px-8">
+          <Suspense fallback={<p className="text-sm text-slate-400" role="status">Loading…</p>}>
+            <Outlet />
+          </Suspense>
+        </main>
+      </div>
     </div>
+  );
+}
+
+export default function AppShell() {
+  return (
+    <AlertsProvider>
+      <Shell />
+    </AlertsProvider>
   );
 }

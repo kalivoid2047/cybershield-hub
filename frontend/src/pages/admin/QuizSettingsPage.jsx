@@ -1,7 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
-import { Check, Search } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Check } from "lucide-react";
 import Button from "../../components/common/Button.jsx";
 import Card from "../../components/common/Card.jsx";
+import { SearchInput } from "../../components/common/Field.jsx";
+import LoadError from "../../components/common/LoadError.jsx";
+import { SkeletonRows } from "../../components/common/Skeleton.jsx";
+import useAsync from "../../hooks/useAsync.js";
+import { errorMessage } from "../../utils/errors.js";
 import PageHeader from "../../components/common/PageHeader.jsx";
 import StatusBadge from "../../components/common/StatusBadge.jsx";
 import { adminService } from "../../services/cyberShieldApi.js";
@@ -60,9 +65,7 @@ function QuizRow({ quiz, onSaved }) {
       setTexts(Object.fromEntries(FIELDS.map((field) => [field.key, String(merged[field.key])])));
       setStatus({ kind: "saved" });
     } catch (error) {
-      const details = error.response?.data?.error?.details;
-      const first = details && typeof details === "object" ? Object.values(details).flat()[0] : null;
-      setStatus({ kind: "error", message: (typeof first === "string" && first) || error.response?.data?.error?.message || "Couldn't save. Please try again." });
+      setStatus({ kind: "error", message: errorMessage(error, "Could not save. Please try again.") });
     }
   }
 
@@ -129,13 +132,8 @@ function QuizRow({ quiz, onSaved }) {
 }
 
 export default function QuizSettingsPage() {
-  const [quizzes, setQuizzes] = useState(null);
+  const { data: quizzes, loading, error, reload, setData: setQuizzes } = useAsync(() => adminService.quizzes().then((items) => (Array.isArray(items) ? items : [])), []);
   const [query, setQuery] = useState("");
-  const [loadError, setLoadError] = useState(false);
-
-  useEffect(() => {
-    adminService.quizzes().then(setQuizzes).catch(() => setLoadError(true));
-  }, []);
 
   const filtered = useMemo(() => (quizzes || []).filter((quiz) => quiz.title.toLowerCase().includes(query.toLowerCase())), [quizzes, query]);
 
@@ -151,25 +149,16 @@ export default function QuizSettingsPage() {
         description="Set each quiz's attempt limit, pass mark and time limit. Attempt limits count submitted attempts only (0 is unlimited). Pass mark changes apply to future attempts; earlier results keep their outcome."
       />
       <Card className="mb-6">
-        <label className="relative block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            className="focus-ring min-h-11 w-full rounded-md border border-white/10 bg-white/7 pl-10 pr-3 text-white"
-            placeholder="Search quizzes"
-            aria-label="Search quizzes"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-        </label>
+        <SearchInput label="Search quizzes" placeholder="Search quizzes" value={query} onChange={(event) => setQuery(event.target.value)} />
       </Card>
       <p className="mb-4 text-xs text-slate-400">
-        The time limit is shown to learners and decides how long an unfinished attempt can be resumed. Quizzes are not automatically submitted when it runs out.
+        The time limit is shown to learners as a countdown. When it runs out, the answers they have given so far are submitted automatically.
       </p>
       <Card>
-        {loadError ? (
-          <p className="text-sm text-rose-200">We couldn't load the quizzes. Check that you have administrator access.</p>
-        ) : !quizzes ? (
-          <p className="text-sm text-slate-400">Loading quizzes...</p>
+        {error ? (
+          <LoadError error={error} message="We could not load the quizzes. Check that you have administrator access." onRetry={reload} />
+        ) : loading || !quizzes ? (
+          <SkeletonRows count={3} />
         ) : filtered.length === 0 ? (
           <p className="text-sm text-slate-400">No quizzes match your search.</p>
         ) : (

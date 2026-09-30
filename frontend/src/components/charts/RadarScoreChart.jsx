@@ -1,8 +1,9 @@
 import { Radar } from "react-chartjs-2";
+import { ChartFrame } from "./ChartShell.jsx";
 
 export default function RadarScoreChart({ labels, values }) {
   return (
-    <div className="h-72">
+    <ChartFrame labels={labels} values={values} label="Score (%)">
       <Radar
         options={{
           responsive: true,
@@ -32,6 +33,6 @@ export default function RadarScoreChart({ labels, values }) {
           ],
         }}
       />
-    </div>
+    </ChartFrame>
   );
 }

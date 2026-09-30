@@ -1,29 +1,45 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Suspense, lazy } from "react";
+import { Route, Routes } from "react-router-dom";
+import { Skeleton } from "./components/common/Skeleton.jsx";
 import AppShell from "./layouts/AppShell.jsx";
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
-import LoginPage from "./pages/auth/LoginPage.jsx";
-import RegisterPage from "./pages/auth/RegisterPage.jsx";
-import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage.jsx";
-import ResetPasswordPage from "./pages/auth/ResetPasswordPage.jsx";
-import VerifyEmailPage from "./pages/auth/VerifyEmailPage.jsx";
-import DashboardPage from "./pages/dashboard/DashboardPage.jsx";
-import TrainingPage from "./pages/training/TrainingPage.jsx";
-import LessonDetailPage from "./pages/training/LessonDetailPage.jsx";
-import QuizListPage from "./pages/quizzes/QuizListPage.jsx";
-import QuizResultsPage from "./pages/quizzes/QuizResultsPage.jsx";
-import QuizTakePage from "./pages/quizzes/QuizTakePage.jsx";
-import PhishingSimulatorPage from "./pages/phishing/PhishingSimulatorPage.jsx";
-import IncidentReportPage from "./pages/incidents/IncidentReportPage.jsx";
-import IncidentTrackerPage from "./pages/incidents/IncidentTrackerPage.jsx";
-import SOCDashboardPage from "./pages/incidents/SOCDashboardPage.jsx";
-import AnalyticsPage from "./pages/analytics/AnalyticsPage.jsx";
-import AlertsPage from "./pages/alerts/AlertsPage.jsx";
-import AuditLogPage from "./pages/admin/AuditLogPage.jsx";
-import QuizSettingsPage from "./pages/admin/QuizSettingsPage.jsx";
-import UsersAdminPage from "./pages/admin/UsersAdminPage.jsx";
+const LoginPage = lazy(() => import("./pages/auth/LoginPage.jsx"));
+const RegisterPage = lazy(() => import("./pages/auth/RegisterPage.jsx"));
+const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPasswordPage.jsx"));
+const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage.jsx"));
+const VerifyEmailPage = lazy(() => import("./pages/auth/VerifyEmailPage.jsx"));
+const DashboardPage = lazy(() => import("./pages/dashboard/DashboardPage.jsx"));
+const TrainingPage = lazy(() => import("./pages/training/TrainingPage.jsx"));
+const LessonDetailPage = lazy(() => import("./pages/training/LessonDetailPage.jsx"));
+const QuizListPage = lazy(() => import("./pages/quizzes/QuizListPage.jsx"));
+const QuizResultsPage = lazy(() => import("./pages/quizzes/QuizResultsPage.jsx"));
+const QuizTakePage = lazy(() => import("./pages/quizzes/QuizTakePage.jsx"));
+const PhishingSimulatorPage = lazy(() => import("./pages/phishing/PhishingSimulatorPage.jsx"));
+const IncidentReportPage = lazy(() => import("./pages/incidents/IncidentReportPage.jsx"));
+const IncidentTrackerPage = lazy(() => import("./pages/incidents/IncidentTrackerPage.jsx"));
+const SOCDashboardPage = lazy(() => import("./pages/incidents/SOCDashboardPage.jsx"));
+const AnalyticsPage = lazy(() => import("./pages/analytics/AnalyticsPage.jsx"));
+const AlertsPage = lazy(() => import("./pages/alerts/AlertsPage.jsx"));
+const AuditLogPage = lazy(() => import("./pages/admin/AuditLogPage.jsx"));
+const QuizSettingsPage = lazy(() => import("./pages/admin/QuizSettingsPage.jsx"));
+const UsersAdminPage = lazy(() => import("./pages/admin/UsersAdminPage.jsx"));
+const IncidentDetailPage = lazy(() => import("./pages/incidents/IncidentDetailPage.jsx"));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage.jsx"));
+
+function PageFallback() {
+  return (
+    <div role="status" aria-live="polite" className="p-6">
+      <span className="sr-only">Loading…</span>
+      <Skeleton className="mb-3 h-4 w-32" />
+      <Skeleton className="mb-8 h-9 w-72" />
+      <Skeleton className="h-64" />
+    </div>
+  );
+}
 
 export default function App() {
   return (
+    <Suspense fallback={<PageFallback />}>
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
@@ -46,6 +62,7 @@ export default function App() {
         <Route path="/phishing" element={<PhishingSimulatorPage />} />
         <Route path="/incidents" element={<IncidentTrackerPage />} />
         <Route path="/incidents/new" element={<IncidentReportPage />} />
+        <Route path="/incidents/:id" element={<IncidentDetailPage />} />
         <Route
           path="/soc"
           element={
@@ -88,7 +105,8 @@ export default function App() {
           }
         />
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
+    </Suspense>
   );
 }

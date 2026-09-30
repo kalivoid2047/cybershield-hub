@@ -25,6 +25,10 @@ function renderInline(text) {
   });
 }
 
+export function slugifyHeading(text = "") {
+  return `section-${text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+}
+
 export function parseMarkdown(source = "") {
   const lines = source.replace(/\r\n/g, "\n").split("\n");
   const blocks = [];
@@ -92,12 +96,12 @@ export function parseMarkdown(source = "") {
 
 export default function MarkdownContent({ source }) {
   return (
-    <div className="space-y-4 text-base leading-8 text-slate-300">
+    <div className="space-y-4 text-base leading-7 text-slate-300">
       {parseMarkdown(source).map((block, index) => {
         switch (block.type) {
           case "h2":
             return (
-              <h2 key={index} className="pt-4 text-xl font-semibold text-white">
+              <h2 key={index} id={slugifyHeading(block.text)} className="scroll-mt-24 pt-4 text-xl font-semibold text-white">
                 {renderInline(block.text)}
               </h2>
             );

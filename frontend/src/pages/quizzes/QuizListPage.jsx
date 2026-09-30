@@ -1,18 +1,18 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { BrainCircuit, Clock, Gauge } from "lucide-react";
 import Button from "../../components/common/Button.jsx";
+import EmptyState from "../../components/common/EmptyState.jsx";
+import LoadError from "../../components/common/LoadError.jsx";
+import { SkeletonCards } from "../../components/common/Skeleton.jsx";
+import useAsync from "../../hooks/useAsync.js";
 import Card from "../../components/common/Card.jsx";
 import PageHeader from "../../components/common/PageHeader.jsx";
 import ProgressBar from "../../components/common/ProgressBar.jsx";
 import { quizService } from "../../services/cyberShieldApi.js";
 
 export default function QuizListPage() {
-  const [quizzes, setQuizzes] = useState([]);
-
-  useEffect(() => {
-    quizService.list().then(setQuizzes);
-  }, []);
+  const { data, loading, error, reload } = useAsync(() => quizService.list().then((items) => (Array.isArray(items) ? items : [])), []);
+  const quizzes = data || [];
 
   return (
     <div>
@@ -21,6 +21,13 @@ export default function QuizListPage() {
         title="Quizzes and Assessments"
         description="Timed checks with automatic grading, pass/fail logic, attempt history, and weakness analysis."
       />
+      {loading ? (
+        <SkeletonCards count={4} className="lg:grid-cols-2" height="h-64" />
+      ) : error ? (
+        <LoadError error={error} message="We couldn't load the quizzes." onRetry={reload} />
+      ) : quizzes.length === 0 ? (
+        <EmptyState icon={BrainCircuit} title="No quizzes available" description="Assessments will appear here once they're published." />
+      ) : (
       <div className="grid gap-4 lg:grid-cols-2">
         {quizzes.map((quiz) => (
           <Card key={quiz.id} className="flex flex-col">
@@ -50,7 +57,7 @@ export default function QuizListPage() {
             <div className="mt-5">
               <div className="mb-2 flex justify-between text-xs text-slate-400">
                 <span>Best score</span>
-                <span>{quiz.best_score || 0}%</span>
+                <span>{quiz.attempts_used > 0 || Number(quiz.best_score) > 0 ? `${Math.round(Number(quiz.best_score) || 0)}%` : "Not attempted"}</span>
               </div>
               <ProgressBar value={quiz.best_score || 0} />
             </div>
@@ -67,12 +74,13 @@ export default function QuizListPage() {
               </Button>
             ) : (
               <Button as={Link} to={`/quizzes/${quiz.id}`} className="mt-3">
-                Start assessment
+                {quiz.attempts_used > 0 ? "Retake assessment" : "Start assessment"}
               </Button>
             )}
           </Card>
         ))}
       </div>
+      )}
     </div>
   );
 }

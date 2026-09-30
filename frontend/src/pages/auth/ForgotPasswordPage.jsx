@@ -1,33 +1,47 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import AuthFrame from "./AuthFrame.jsx";
+import Alert from "../../components/common/Alert.jsx";
 import Button from "../../components/common/Button.jsx";
+import { Input } from "../../components/common/Field.jsx";
 import { authService } from "../../services/cyberShieldApi.js";
+import { errorMessage } from "../../utils/errors.js";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleSubmit(event) {
     event.preventDefault();
-    await authService.resetPassword(email);
-    setSent(true);
+    setError("");
+    setSubmitting(true);
+    try {
+      await authService.resetPassword(email);
+      setSent(true);
+    } catch (err) {
+      setError(errorMessage(err, "We couldn't send the reset link. Please try again."));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
     <AuthFrame title="Reset password" subtitle="Request a secure password reset link for your account.">
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <input className="focus-ring min-h-11 w-full rounded-md border border-white/10 bg-white/7 px-3 text-white" placeholder="Email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+        <Input label="Email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+        {error && <Alert tone="error">{error}</Alert>}
         {sent && (
-          <p className="rounded-md border border-mint/20 bg-mint/10 px-3 py-2 text-sm text-emerald-100">
+          <Alert tone="success">
             If the account exists, reset instructions were sent.{" "}
             <Link className="font-semibold underline" to="/reset-password">
               Enter reset token
             </Link>
-          </p>
+          </Alert>
         )}
-        <Button className="w-full" type="submit">
-          Send reset link
+        <Button className="w-full" type="submit" disabled={submitting}>
+          {submitting ? "Sending..." : sent ? "Send again" : "Send reset link"}
         </Button>
       </form>
       <Link className="mt-5 inline-block text-sm text-cyanx hover:text-sky-200" to="/login">

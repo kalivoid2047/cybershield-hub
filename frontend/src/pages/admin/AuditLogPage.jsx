@@ -1,32 +1,36 @@
-import { useEffect, useMemo, useState } from "react";
-import { Download, Search } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Download, ScrollText } from "lucide-react";
 import Button from "../../components/common/Button.jsx";
 import Card from "../../components/common/Card.jsx";
+import EmptyState from "../../components/common/EmptyState.jsx";
+import { SearchInput } from "../../components/common/Field.jsx";
+import LoadError from "../../components/common/LoadError.jsx";
+import { SkeletonRows } from "../../components/common/Skeleton.jsx";
+import { useToast } from "../../components/common/Toast.jsx";
+import useAsync from "../../hooks/useAsync.js";
+import { errorMessage } from "../../utils/errors.js";
 import PageHeader from "../../components/common/PageHeader.jsx";
 import { adminService } from "../../services/cyberShieldApi.js";
 import { formatDate } from "../../utils/formatters.js";
 
 export default function AuditLogPage() {
-  const [logs, setLogs] = useState([]);
+  const { data, loading, error, reload } = useAsync(() => adminService.auditLogs().then((items) => (Array.isArray(items) ? items : [])), []);
+  const logs = data || [];
+  const toast = useToast();
   const [query, setQuery] = useState("");
   const [exporting, setExporting] = useState(false);
-  const [exportError, setExportError] = useState("");
 
   async function handleExport() {
     setExporting(true);
-    setExportError("");
     try {
       await adminService.exportAuditLogs();
-    } catch {
-      setExportError("Export failed. Please try again.");
+      toast.success("Audit log export downloaded.");
+    } catch (err) {
+      toast.error(errorMessage(err, "Export failed. Please try again."));
     } finally {
       setExporting(false);
     }
   }
-
-  useEffect(() => {
-    adminService.auditLogs().then(setLogs);
-  }, []);
 
   const filtered = useMemo(() => logs.filter((log) => `${log.actor?.email} ${log.action} ${log.resource_type} ${log.ip_address}`.toLowerCase().includes(query.toLowerCase())), [logs, query]);
 
@@ -43,39 +47,45 @@ export default function AuditLogPage() {
           </Button>
         }
       />
-      {exportError && <p className="mb-4 rounded-md border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-rose-200">{exportError}</p>}
       <Card className="mb-6">
-        <label className="relative block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-          <input className="focus-ring min-h-11 w-full rounded-md border border-white/10 bg-white/7 pl-10 pr-3 text-white" placeholder="Search audit trail" value={query} onChange={(event) => setQuery(event.target.value)} />
-        </label>
+        <SearchInput label="Search audit trail" placeholder="Search by actor, action, resource or IP" value={query} onChange={(event) => setQuery(event.target.value)} />
       </Card>
-      <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-left text-sm">
-            <thead className="text-xs uppercase tracking-[0.18em] text-slate-500">
-              <tr>
-                <th className="pb-3">Time</th>
-                <th className="pb-3">Actor</th>
-                <th className="pb-3">Action</th>
-                <th className="pb-3">Resource</th>
-                <th className="pb-3">IP</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/10">
-              {filtered.map((log) => (
-                <tr key={log.id}>
-                  <td className="py-4 text-slate-400">{formatDate(log.created_at)}</td>
-                  <td className="py-4 text-white">{log.actor?.email || "system"}</td>
-                  <td className="py-4 font-mono text-cyanx">{log.action}</td>
-                  <td className="py-4 text-slate-300">{log.resource_type}</td>
-                  <td className="py-4 text-slate-400">{log.ip_address}</td>
+      {loading ? (
+        <Card>
+          <SkeletonRows count={6} />
+        </Card>
+      ) : error ? (
+        <LoadError error={error} message="We could not load the audit log." onRetry={reload} />
+      ) : filtered.length === 0 ? (
+        <EmptyState icon={ScrollText} title="No audit entries" description={query ? "Nothing matches your search." : "Security events will be recorded here."} />
+      ) : (
+        <Card>
+          <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Audit log table">
+            <table className="w-full min-w-[760px] text-left text-sm">
+              <thead className="text-xs uppercase tracking-[0.18em] text-slate-400">
+                <tr>
+                  <th scope="col" className="pb-3">Time</th>
+                  <th scope="col" className="pb-3">Actor</th>
+                  <th scope="col" className="pb-3">Action</th>
+                  <th scope="col" className="pb-3">Resource</th>
+                  <th scope="col" className="pb-3">IP</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {filtered.map((log) => (
+                  <tr key={log.id}>
+                    <td className="py-4 text-slate-400">{formatDate(log.created_at)}</td>
+                    <td className="py-4 text-white">{log.actor?.email || "system"}</td>
+                    <td className="py-4 font-mono text-cyanx">{log.action}</td>
+                    <td className="py-4 text-slate-300">{log.resource_type}</td>
+                    <td className="py-4 text-slate-400">{log.ip_address}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

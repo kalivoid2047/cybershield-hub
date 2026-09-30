@@ -1,9 +1,9 @@
 import { Bar } from "react-chartjs-2";
-import { chartColors, chartOptions } from "./ChartShell.jsx";
+import { chartColors, chartOptions, ChartFrame } from "./ChartShell.jsx";
 
 export default function BarMetricChart({ labels, values, label = "Count" }) {
   return (
-    <div className="h-72">
+    <ChartFrame labels={labels} values={values} label={label}>
       <Bar
         options={{
           ...chartOptions,
@@ -21,6 +21,6 @@ export default function BarMetricChart({ labels, values, label = "Count" }) {
           ],
         }}
       />
-    </div>
+    </ChartFrame>
   );
 }

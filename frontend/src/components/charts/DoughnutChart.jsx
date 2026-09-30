@@ -1,9 +1,9 @@
 import { Doughnut } from "react-chartjs-2";
-import { chartColors } from "./ChartShell.jsx";
+import { chartColors, ChartFrame } from "./ChartShell.jsx";
 
-export default function DoughnutChart({ labels, values }) {
+export default function DoughnutChart({ labels, values, label = "Value" }) {
   return (
-    <div className="h-72">
+    <ChartFrame labels={labels} values={values} label={label}>
       <Doughnut
         options={{
           responsive: true,
@@ -21,6 +21,6 @@ export default function DoughnutChart({ labels, values }) {
           datasets: [{ data: values, backgroundColor: chartColors(0.78), borderWidth: 0 }],
         }}
       />
-    </div>
+    </ChartFrame>
   );
 }

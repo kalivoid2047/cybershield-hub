@@ -70,3 +70,44 @@ select {
 .focus-ring {
   @apply focus:outline-none focus:ring-2 focus:ring-cyanx/70 focus:ring-offset-2 focus:ring-offset-void;
 }
+
+/* Native dropdown lists ignore the field background in some browsers and render white. */
+select option,
+select optgroup {
+  background-color: #0a1322;
+  color: #e5f6ff;
+}
+
+/* Route changes move focus to <main>; it doesn't need a visible ring. */
+main:focus,
+h1:focus {
+  outline: none;
+}
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  z-index: 100;
+  border-radius: 0.375rem;
+  background: #2dd4ff;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  color: #050914;
+  transition: top 0.15s;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

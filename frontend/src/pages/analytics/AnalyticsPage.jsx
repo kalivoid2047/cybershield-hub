@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
 import { BarChart3, BrainCircuit, ClipboardList, Gauge, GraduationCap, Users } from "lucide-react";
 import Card from "../../components/common/Card.jsx";
+import LoadError from "../../components/common/LoadError.jsx";
+import useAsync from "../../hooks/useAsync.js";
 import MetricCard from "../../components/common/MetricCard.jsx";
 import PageHeader from "../../components/common/PageHeader.jsx";
 import BarMetricChart from "../../components/charts/BarMetricChart.jsx";
@@ -9,13 +10,11 @@ import LineTrendChart from "../../components/charts/LineTrendChart.jsx";
 import { analyticsService } from "../../services/cyberShieldApi.js";
 
 export default function AnalyticsPage() {
-  const [charts, setCharts] = useState(null);
-  const [org, setOrg] = useState(null);
-
-  useEffect(() => {
-    analyticsService.charts().then(setCharts);
-    analyticsService.organization().then(setOrg);
-  }, []);
+  const chartsQuery = useAsync(() => analyticsService.charts(), []);
+  const orgQuery = useAsync(() => analyticsService.organization(), []);
+  const charts = chartsQuery.data;
+  const org = orgQuery.data;
+  const error = chartsQuery.error || orgQuery.error;
 
   const trends = charts?.incident_trends || [];
   const severity = charts?.incident_severity || [];
@@ -34,11 +33,23 @@ export default function AnalyticsPage() {
         title="Analytics and Reporting"
         description="Training completion, quiz performance, phishing awareness, incident trends, severity mix, engagement, and organization cyber risk."
       />
+      {error && (
+        <div className="mb-6">
+          <LoadError
+            error={error}
+            message="Some analytics could not be loaded."
+            onRetry={() => {
+              chartsQuery.reload();
+              orgQuery.reload();
+            }}
+          />
+        </div>
+      )}
       <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard icon={Users} label="Active users" value={org?.active_users || 0} detail="Current accounts" tone="cyan" />
-        <MetricCard icon={GraduationCap} label="Training completion" value={`${org?.training_completion_rate || 0}%`} detail="Lessons completed" tone="green" />
-        <MetricCard icon={BrainCircuit} label="Quiz average" value={`${org?.quiz_average || 0}%`} detail="Assessment score" tone="amber" />
-        <MetricCard icon={Gauge} label="Org risk score" value={org?.organization_risk_score || 0} detail="Lower is better" tone="rose" />
+        <MetricCard loading={orgQuery.loading} icon={Users} label="Active users" value={org?.active_users || 0} detail="Current accounts" tone="cyan" />
+        <MetricCard loading={orgQuery.loading} icon={GraduationCap} label="Training completion" value={`${org?.training_completion_rate || 0}%`} detail="Lessons completed" tone="green" />
+        <MetricCard loading={orgQuery.loading} icon={BrainCircuit} label="Quiz average" value={`${org?.quiz_average || 0}%`} detail="Assessment score" tone="amber" />
+        <MetricCard loading={orgQuery.loading} icon={Gauge} label="Org risk score" value={org?.organization_risk_score || 0} detail="Lower is better" tone="rose" />
       </div>
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
@@ -53,7 +64,7 @@ export default function AnalyticsPage() {
             <BarChart3 className="h-5 w-5 text-amberx" />
             <h2 className="font-semibold text-white">Incident severity</h2>
           </div>
-          <DoughnutChart labels={severity.map((item) => item.severity)} values={severity.map((item) => item.count)} />
+          <DoughnutChart labels={severity.map((item) => item.severity)} values={severity.map((item) => item.count)} label="Incidents" />
         </Card>
         <Card>
           <h2 className="mb-4 font-semibold text-white">Training by category</h2>

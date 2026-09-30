@@ -1,4 +1,7 @@
+import usePageTitle from "../../hooks/usePageTitle.js";
+
 export default function PageHeader({ eyebrow, title, description, actions }) {
+  usePageTitle(title);
   return (
     <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
       <div>

@@ -136,7 +136,13 @@ export const phishingService = {
 };
 
 export const incidentService = {
-  list: () => withFallback(() => apiClient.get("/incidents/incidents/"), incidents),
+  // The API paginates at 20; the tracker filters/pages client-side, so ask for the maximum page.
+  list: () => withFallback(() => apiClient.get("/incidents/incidents/", { params: { page_size: 100 } }), incidents),
+  detail: (id) =>
+    withFallback(
+      () => apiClient.get(`/incidents/incidents/${id}/`),
+      () => incidents.find((item) => String(item.id) === String(id)) || null,
+    ),
   queue: () =>
     withFallback(
       () => apiClient.get("/incidents/incidents/queue/"),
