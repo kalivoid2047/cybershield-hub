@@ -77,7 +77,7 @@ export const quizService = {
   attempt: (id) => apiClient.get(`/quizzes/attempts/${id}/`).then(unwrap),
   // Opens (or resumes) a server-side attempt so duration is measured from when the quiz was opened.
   start: (id) => withFallback(() => apiClient.post(`/quizzes/quizzes/${id}/start/`), () => ({ id: null })),
-  list: () => withFallback(() => apiClient.get("/quizzes/quizzes/"), quizzes),
+  list: () => withFallback(() => apiClient.get("/quizzes/quizzes/", { params: { page_size: 100 } }), quizzes),
   detail: (id) => withFallback(() => apiClient.get(`/quizzes/quizzes/${id}/`), quizzes.find((quiz) => String(quiz.id) === String(id)) || quizzes[0]),
   submit: (id, payload) =>
     withFallback(
@@ -189,6 +189,9 @@ export const analyticsService = {
 };
 
 export const adminService = {
+  // No demo fallback: showing fake quizzes here would let someone "save" settings that go nowhere.
+  quizzes: () => apiClient.get("/quizzes/quizzes/", { params: { page_size: 100 } }).then(unwrap),
+  updateQuiz: (id, patch) => apiClient.patch(`/quizzes/quizzes/${id}/`, patch).then(unwrap),
   users: () => withFallback(() => apiClient.get("/auth/users/"), users),
   auditLogs: () => withFallback(() => apiClient.get("/audit/logs/"), auditLogs),
   async exportAuditLogs() {

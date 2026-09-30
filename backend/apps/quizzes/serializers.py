@@ -3,6 +3,8 @@ from rest_framework import serializers
 from apps.quizzes.models import AnswerOption, Question, Quiz, QuizAttempt, QuizAttemptAnswer
 from apps.quizzes.services import attempts_remaining
 
+MAX_ATTEMPTS_LIMIT = 100
+
 
 class AnswerOptionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -148,6 +150,12 @@ class QuizAdminSerializer(serializers.ModelSerializer):
             "randomize_questions",
             "questions",
         ]
+
+    def validate_max_attempts(self, value):
+        # 0 means unlimited; the upper bound just catches typos like 1000.
+        if value > MAX_ATTEMPTS_LIMIT:
+            raise serializers.ValidationError(f"Must be {MAX_ATTEMPTS_LIMIT} or fewer. Use 0 for unlimited attempts.")
+        return value
 
     def create(self, validated_data):
         questions_data = validated_data.pop("questions", [])

@@ -11,6 +11,7 @@ import {
   LogOut,
   Menu,
   ShieldCheck,
+  SlidersHorizontal,
   Users,
   X,
 } from "lucide-react";
@@ -29,6 +30,7 @@ const navItems = [
   { label: "Analytics", to: "/analytics", icon: BarChart3, roles: ["cybersecurity_officer", "system_admin"] },
   { label: "Alerts", to: "/alerts", icon: Bell },
   { label: "Users", to: "/admin/users", icon: Users, roles: ["system_admin"] },
+  { label: "Quiz Settings", to: "/admin/quizzes", icon: SlidersHorizontal, roles: ["system_admin"] },
   { label: "Audit", to: "/admin/audit", icon: ShieldCheck, roles: ["cybersecurity_officer", "system_admin"] },
 ];
 

@@ -19,6 +19,7 @@ import SOCDashboardPage from "./pages/incidents/SOCDashboardPage.jsx";
 import AnalyticsPage from "./pages/analytics/AnalyticsPage.jsx";
 import AlertsPage from "./pages/alerts/AlertsPage.jsx";
 import AuditLogPage from "./pages/admin/AuditLogPage.jsx";
+import QuizSettingsPage from "./pages/admin/QuizSettingsPage.jsx";
 import UsersAdminPage from "./pages/admin/UsersAdminPage.jsx";
 
 export default function App() {
@@ -67,6 +68,14 @@ export default function App() {
           element={
             <ProtectedRoute roles={["system_admin"]}>
               <UsersAdminPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/quizzes"
+          element={
+            <ProtectedRoute roles={["system_admin"]}>
+              <QuizSettingsPage />
             </ProtectedRoute>
           }
         />
