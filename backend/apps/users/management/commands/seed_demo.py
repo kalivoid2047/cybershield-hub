@@ -134,6 +134,7 @@ class Command(BaseCommand):
                     "lesson": Lesson.objects.filter(slug=spec["lesson"]).first(),
                     "time_limit_minutes": spec["time_limit_minutes"],
                     "pass_score": spec["pass_score"],
+                    "max_attempts": spec["max_attempts"],
                     "is_active": True,
                     "created_by": admin,
                 },

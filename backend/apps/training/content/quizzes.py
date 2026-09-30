@@ -1,6 +1,8 @@
 """Curriculum quizzes.
 
 Each question is ``(prompt, competency, explanation, answers, correct_index)``.
+
+``max_attempts`` is 0 (unlimited) for practice quizzes and 3 for the harder, 80%-pass assessments.
 """
 
 QUIZZES = [
@@ -12,6 +14,7 @@ QUIZZES = [
         "lesson": "phishing-red-flags-in-10-minutes",
         "time_limit_minutes": 8,
         "pass_score": 75,
+        "max_attempts": 0,
         "questions": [
             (
                 "Which signal is most suspicious in an email asking you to reset your password?",
@@ -65,6 +68,7 @@ QUIZZES = [
         "lesson": "spear-phishing-and-business-email-compromise",
         "time_limit_minutes": 10,
         "pass_score": 80,
+        "max_attempts": 3,
         "questions": [
             (
                 "A supplier emails new bank details for the next invoice. What is the safest action?",
@@ -118,6 +122,7 @@ QUIZZES = [
         "lesson": "password-managers-and-mfa",
         "time_limit_minutes": 8,
         "pass_score": 75,
+        "max_attempts": 0,
         "questions": [
             (
                 "Which password is the strongest choice?",
@@ -171,6 +176,7 @@ QUIZZES = [
         "lesson": "malware-intake-basics",
         "time_limit_minutes": 8,
         "pass_score": 75,
+        "max_attempts": 0,
         "questions": [
             (
                 "Which malware type encrypts files and demands payment?",
@@ -224,6 +230,7 @@ QUIZZES = [
         "lesson": "ransomware-prevention-and-response",
         "time_limit_minutes": 10,
         "pass_score": 80,
+        "max_attempts": 3,
         "questions": [
             (
                 "What does the 3-2-1 backup rule recommend?",
@@ -270,6 +277,7 @@ QUIZZES = [
         "lesson": "social-engineering-principles",
         "time_limit_minutes": 8,
         "pass_score": 75,
+        "max_attempts": 0,
         "questions": [
             (
                 "Someone calls claiming to be IT and asks for your password to 'fix your account'. What is the correct response?",
@@ -323,6 +331,7 @@ QUIZZES = [
         "lesson": "safe-browsing-fundamentals",
         "time_limit_minutes": 8,
         "pass_score": 75,
+        "max_attempts": 0,
         "questions": [
             (
                 "What does the browser padlock (HTTPS) guarantee?",
@@ -376,6 +385,7 @@ QUIZZES = [
         "lesson": "securing-your-mobile-device",
         "time_limit_minutes": 8,
         "pass_score": 75,
+        "max_attempts": 0,
         "questions": [
             (
                 "Your work phone is lost. What should you do first?",
@@ -429,6 +439,7 @@ QUIZZES = [
         "lesson": "handling-sensitive-data",
         "time_limit_minutes": 8,
         "pass_score": 75,
+        "max_attempts": 0,
         "questions": [
             (
                 "Which of these is PII?",
@@ -482,6 +493,7 @@ QUIZZES = [
         "lesson": "secure-email-habits",
         "time_limit_minutes": 8,
         "pass_score": 75,
+        "max_attempts": 0,
         "questions": [
             (
                 "Why should you periodically review your mailbox rules?",
@@ -535,6 +547,7 @@ QUIZZES = [
         "lesson": "email-authentication-spf-dkim-dmarc",
         "time_limit_minutes": 10,
         "pass_score": 80,
+        "max_attempts": 3,
         "questions": [
             (
                 "In which order should you read the Received headers to trace a message's path?",
@@ -581,6 +594,7 @@ QUIZZES = [
         "lesson": "encryption-and-data-protection",
         "time_limit_minutes": 10,
         "pass_score": 80,
+        "max_attempts": 3,
         "questions": [
             (
                 "Which best describes symmetric encryption?",

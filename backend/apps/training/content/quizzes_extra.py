@@ -12,6 +12,7 @@ EXTRA_QUIZZES = [
         "lesson": "smishing-vishing-and-qr-phishing",
         "time_limit_minutes": 8,
         "pass_score": 75,
+        "max_attempts": 0,
         "questions": [
             (
                 "You get a text saying a parcel is held and asking you to tap a link to pay a fee. What is the safest response?",
@@ -58,6 +59,7 @@ EXTRA_QUIZZES = [
         "lesson": "how-passwords-are-attacked",
         "time_limit_minutes": 10,
         "pass_score": 80,
+        "max_attempts": 3,
         "questions": [
             (
                 "An attacker tries the password 'Welcome1' against thousands of different accounts, one attempt each. What is this?",
@@ -104,6 +106,7 @@ EXTRA_QUIZZES = [
         "lesson": "insider-threats-and-physical-security",
         "time_limit_minutes": 8,
         "pass_score": 75,
+        "max_attempts": 0,
         "questions": [
             (
                 "Which type of insider risk is the most common?",
@@ -150,6 +153,7 @@ EXTRA_QUIZZES = [
         "lesson": "web-application-attacks-for-users",
         "time_limit_minutes": 10,
         "pass_score": 80,
+        "max_attempts": 3,
         "questions": [
             (
                 "What is the root cause of cross-site scripting (XSS)?",
@@ -196,6 +200,7 @@ EXTRA_QUIZZES = [
         "lesson": "mobile-threats-and-app-risks",
         "time_limit_minutes": 8,
         "pass_score": 75,
+        "max_attempts": 0,
         "questions": [
             (
                 "Which permission lets an app read the screen and tap on your behalf, making it especially dangerous?",

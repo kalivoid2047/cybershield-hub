@@ -69,6 +69,17 @@ class TestQuizContentDefinitions:
         assert len(slugs) == len(set(slugs))
         assert all(SLUG_RE.match(slug) for slug in slugs)
 
+    @pytest.mark.parametrize("quiz", QUIZZES, ids=lambda quiz: quiz["slug"])
+    def test_max_attempts_is_explicit_and_leaves_room_to_retake(self, quiz):
+        # 0 = unlimited. A limit of 1 would make the "retake" flow pointless.
+        assert "max_attempts" in quiz
+        assert quiz["max_attempts"] == 0 or quiz["max_attempts"] >= 2
+
+    def test_only_hard_assessments_are_limited(self):
+        for quiz in QUIZZES:
+            if quiz["max_attempts"]:
+                assert quiz["pass_score"] >= 80, f"{quiz['slug']}: practice quizzes should stay unlimited"
+
     def test_every_lesson_has_a_quiz(self):
         """Every lesson page shows a Take quiz button, so each lesson needs at least one quiz."""
         assert {lesson["slug"] for lesson in LESSONS} <= {quiz["lesson"] for quiz in QUIZZES}
@@ -151,6 +162,26 @@ class TestSeededCurriculum:
             for question in quiz.questions.all():
                 correct = [answer for answer in question.answers.all() if answer.is_correct]
                 assert len(correct) == 1, f"{quiz.slug}: {question.prompt}"
+
+    def test_seed_applies_max_attempts_from_content(self, seeded):
+        expected = {quiz["slug"]: quiz["max_attempts"] for quiz in QUIZZES}
+        actual = dict(Quiz.objects.values_list("slug", "max_attempts"))
+        assert actual == expected
+        assert any(value for value in expected.values()) and not all(expected.values())
+
+    def test_limited_quiz_blocks_after_three_seeded_attempts(self, seeded, learner, learner_client):
+        quiz = Quiz.objects.get(slug="ransomware-response")
+        assert quiz.max_attempts == 3
+        for _ in range(3):
+            attempt = learner_client.post(reverse("quizzes-start", args=[quiz.id])).json()["data"]
+            learner_client.post(reverse("quizzes-submit", args=[quiz.id]), {"attempt_id": attempt["id"], "answers": self._first_answers(quiz)}, format="json")
+
+        assert learner_client.post(reverse("quizzes-start", args=[quiz.id])).status_code == 403
+
+    @staticmethod
+    def _first_answers(quiz):
+        question = quiz.questions.first()
+        return [{"question_id": question.id, "answer_id": question.answers.first().id}]
 
     def test_quizzes_are_linked_to_lessons(self, seeded):
         for quiz in Quiz.objects.all():
