@@ -5,6 +5,7 @@ import '../api/cybershield_api.dart';
 import '../models/models.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/glass.dart';
 import 'lesson_detail_screen.dart';
 import 'phishing_screens.dart';
 import 'quiz_screens.dart';
@@ -19,12 +20,14 @@ class LearnScreen extends StatelessWidget {
       length: 3,
       child: Column(
         children: [
-          TabBar(
-            tabs: [
-              Tab(text: 'Lessons'),
-              Tab(text: 'Quizzes'),
-              Tab(text: 'Phishing lab'),
-            ],
+          Padding(
+            padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: GlassCard(
+              radius: 18,
+              blur: 16,
+              padding: EdgeInsets.all(4),
+              child: _GlassTabBar(),
+            ),
           ),
           Expanded(
             child: TabBarView(
@@ -203,6 +206,38 @@ class _LessonsTabState extends State<_LessonsTab>
           ],
         );
       },
+    );
+  }
+}
+
+/// Segmented control look: a glowing glass pill slides under the active tab.
+class _GlassTabBar extends StatelessWidget {
+  const _GlassTabBar();
+
+  @override
+  Widget build(BuildContext context) {
+    return TabBar(
+      dividerColor: Colors.transparent,
+      indicatorSize: TabBarIndicatorSize.tab,
+      splashBorderRadius: BorderRadius.circular(14),
+      labelColor: Palette.accent,
+      unselectedLabelColor: Palette.textMuted,
+      labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+      indicator: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        gradient: LinearGradient(
+          colors: [
+            Palette.accent.withValues(alpha: 0.28),
+            Palette.accent.withValues(alpha: 0.10),
+          ],
+        ),
+        border: Border.all(color: Palette.accent.withValues(alpha: 0.4)),
+      ),
+      tabs: const [
+        Tab(text: 'Lessons', height: 38),
+        Tab(text: 'Quizzes', height: 38),
+        Tab(text: 'Phishing lab', height: 38),
+      ],
     );
   }
 }

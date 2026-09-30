@@ -5,8 +5,9 @@ import '../api/api_client.dart';
 import '../api/cybershield_api.dart';
 import '../config.dart';
 import '../state/auth_state.dart';
-import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/glass.dart';
+import '../widgets/three_d.dart';
 
 class _AuthFrame extends StatelessWidget {
   const _AuthFrame({
@@ -31,35 +32,29 @@ class _AuthFrame extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Center(
-                    child: Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: Palette.accent.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Palette.accent.withValues(alpha: 0.4),
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.shield_rounded,
-                        color: Palette.accent,
-                        size: 34,
-                      ),
+                  const Center(
+                    child: Layered3DIcon(
+                      icon: Icons.shield_rounded,
+                      overlayIcon: Icons.check_rounded,
+                      size: 96,
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  Text(
+                  GradientText(
                     title,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineSmall
+                    style: Theme.of(context).textTheme.headlineMedium
                         ?.copyWith(fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 6),
                   MutedText(subtitle, size: 14, align: TextAlign.center),
-                  const SizedBox(height: 28),
-                  ...children,
+                  const SizedBox(height: 22),
+                  GlassCard(
+                    padding: const EdgeInsets.all(20),
+                    radius: 24,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: children,
+                    ),
+                  ),
                   const SizedBox(height: 24),
                   MutedText(
                     'Server: $apiBaseUrl',

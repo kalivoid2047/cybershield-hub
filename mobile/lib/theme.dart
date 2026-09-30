@@ -34,11 +34,20 @@ ThemeData buildTheme() {
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
-    scaffoldBackgroundColor: Palette.background,
+    // Transparent so the aurora background (see AuroraBackground) shows through every screen.
+    scaffoldBackgroundColor: Colors.transparent,
+    canvasColor: Palette.surface,
+    dialogTheme: DialogThemeData(
+      backgroundColor: Palette.surfaceHigh,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+    ),
+    tabBarTheme: const TabBarThemeData(dividerColor: Colors.transparent),
     appBarTheme: const AppBarTheme(
-      backgroundColor: Palette.background,
+      backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
+      scrolledUnderElevation: 0,
     ),
     cardTheme: CardThemeData(
       color: Palette.surface,
@@ -51,7 +60,7 @@ ThemeData buildTheme() {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: Palette.surface,
+      fillColor: Colors.white.withValues(alpha: 0.07),
       border: border(Palette.border),
       enabledBorder: border(Palette.border),
       focusedBorder: border(Palette.accent),
@@ -60,7 +69,10 @@ ThemeData buildTheme() {
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        minimumSize: const Size.fromHeight(48),
+        minimumSize: const Size.fromHeight(50),
+        elevation: 8,
+        shadowColor: Palette.accent.withValues(alpha: 0.5),
+        textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     ),

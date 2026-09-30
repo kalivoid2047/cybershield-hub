@@ -8,6 +8,7 @@ import '../api/cybershield_api.dart';
 import '../models/models.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/three_d.dart';
 import 'lesson_detail_screen.dart';
 
 // -- list ----------------------------------------------------------------------
@@ -640,14 +641,14 @@ class QuizResultScreen extends StatelessWidget {
             accent: color,
             child: Column(
               children: [
-                Icon(
-                  passed
+                Layered3DIcon(
+                  icon: passed
                       ? Icons.emoji_events_rounded
-                      : Icons.replay_circle_filled_rounded,
-                  size: 48,
+                      : Icons.shield_rounded,
+                  overlayIcon: passed ? null : Icons.replay_rounded,
+                  size: 84,
                   color: color,
                 ),
-                const SizedBox(height: 8),
                 Text(
                   '${attempt.score.round()}%',
                   style: const TextStyle(

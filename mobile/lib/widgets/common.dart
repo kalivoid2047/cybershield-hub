@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../theme.dart';
+import 'glass.dart';
 
 // -- formatting helpers --------------------------------------------------------
 
@@ -129,13 +130,42 @@ class ProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(99),
-      child: LinearProgressIndicator(
-        value: (percent / 100).clamp(0, 1).toDouble(),
-        minHeight: height,
-        color: color,
-        backgroundColor: Palette.border,
+    final target = (percent / 100).clamp(0, 1).toDouble();
+    return TweenAnimationBuilder<double>(
+      tween: Tween(end: target),
+      duration: reduceMotion(context)
+          ? Duration.zero
+          : const Duration(milliseconds: 700),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, _) => Container(
+        height: height,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.09),
+          borderRadius: BorderRadius.circular(99),
+        ),
+        alignment: Alignment.centerLeft,
+        child: FractionallySizedBox(
+          widthFactor: value,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(99),
+              gradient: LinearGradient(
+                colors: [
+                  color.withValues(alpha: 0.75),
+                  Color.lerp(color, Colors.white, 0.35)!,
+                ],
+              ),
+              boxShadow: value > 0
+                  ? [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.55),
+                        blurRadius: 8,
+                      ),
+                    ]
+                  : null,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -303,6 +333,7 @@ class AppCard extends StatelessWidget {
     this.onTap,
     this.padding = const EdgeInsets.all(16),
     this.accent,
+    this.animate = true,
   });
 
   final Widget child;
@@ -310,21 +341,18 @@ class AppCard extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final Color? accent;
 
+  /// Cards cascade in when a screen loads; turn off for cards nested in other cards.
+  final bool animate;
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: accent?.withValues(alpha: 0.45) ?? Palette.border,
-        ),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(padding: padding, child: child),
-      ),
+    final card = GlassCard(
+      onTap: onTap,
+      padding: padding,
+      tint: accent,
+      child: child,
     );
+    return animate ? FadeSlideIn(child: card) : card;
   }
 }
 
@@ -384,7 +412,7 @@ class _LoadViewState<T> extends State<LoadView<T>> {
   @override
   Widget build(BuildContext context) {
     if (_loading && _data == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const SkeletonList();
     }
     if (_error != null && _data == null) {
       return ErrorView(message: _error!, onRetry: _fetch);

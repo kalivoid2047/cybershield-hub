@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -6,6 +8,8 @@ import '../models/models.dart';
 import '../state/auth_state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/glass.dart';
+import '../widgets/three_d.dart';
 import 'learn_screen.dart';
 import 'lesson_detail_screen.dart';
 
@@ -34,15 +38,54 @@ class DashboardScreen extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
-            Text(
-              'Welcome back,',
-              style: Theme.of(context).textTheme.bodyMedium
-                  ?.copyWith(color: Palette.textMuted),
-            ),
-            Text(
-              user.firstName.isEmpty ? user.fullName : user.firstName,
-              style: Theme.of(context).textTheme.headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.w800),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${_greeting()},',
+                        style: Theme.of(context).textTheme.bodyMedium
+                            ?.copyWith(color: Palette.textMuted),
+                      ),
+                      GradientText(
+                        user.firstName.isEmpty ? user.fullName : user.firstName,
+                        align: TextAlign.start,
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => onOpenTab(4),
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: [Palette.accent, Color(0xFF7C3AED)],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Palette.accent.withValues(alpha: 0.4),
+                          blurRadius: 14,
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      user.initials,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             _ScoreCard(stats: stats),
@@ -148,63 +191,142 @@ class _ScoreCard extends StatelessWidget {
     final lessonPercent = stats.lessonsTotal == 0
         ? 0
         : (stats.lessonsCompleted / stats.lessonsTotal * 100);
-    return AppCard(
-      child: Row(
-        children: [
-          SizedBox(
-            width: 96,
-            height: 96,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox.expand(
-                  child: CircularProgressIndicator(
-                    value: score / 100,
-                    strokeWidth: 9,
-                    color: color,
-                    backgroundColor: Palette.border,
-                    strokeCap: StrokeCap.round,
+    return Tilt3D(
+      child: AppCard(
+        child: Row(
+          children: [
+            _ScoreRing(score: score, color: color),
+            const SizedBox(width: 18),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Security score',
+                    style: Theme.of(context).textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w700),
                   ),
-                ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '$score',
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const MutedText('of 100', size: 11),
-                  ],
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  MutedText(
+                    '${stats.lessonsCompleted} of ${stats.lessonsTotal} lessons completed',
+                  ),
+                  const SizedBox(height: 10),
+                  ProgressBar(lessonPercent, color: color),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 18),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Security score',
-                  style: Theme.of(context).textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 4),
-                MutedText(
-                  '${stats.lessonsCompleted} of ${stats.lessonsTotal} lessons completed',
-                ),
-                const SizedBox(height: 10),
-                ProgressBar(lessonPercent, color: color),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+}
+
+class _ScoreRing extends StatelessWidget {
+  const _ScoreRing({required this.score, required this.color});
+
+  final int score;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(end: score.toDouble()),
+      duration: reduceMotion(context)
+          ? Duration.zero
+          : const Duration(milliseconds: 1300),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, _) => SizedBox(
+        width: 100,
+        height: 100,
+        child: CustomPaint(
+          painter: _RingPainter(progress: value / 100, color: color),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${value.round()}',
+                  style: const TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const MutedText('of 100', size: 11),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RingPainter extends CustomPainter {
+  _RingPainter({required this.progress, required this.color});
+
+  final double progress;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const stroke = 10.0;
+    final rect = Offset.zero & size;
+    final arc = rect.deflate(stroke / 2 + 2);
+    final track = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke
+      ..color = Colors.white.withValues(alpha: 0.09);
+    canvas.drawArc(arc, 0, math.pi * 2, false, track);
+    if (progress <= 0) return;
+
+    final sweep = math.pi * 2 * progress;
+    final shader = SweepGradient(
+      startAngle: -math.pi / 2,
+      endAngle: -math.pi / 2 + math.pi * 2,
+      colors: [
+        color.withValues(alpha: 0.5),
+        Color.lerp(color, Colors.white, 0.4)!,
+      ],
+      transform: const GradientRotation(0),
+    ).createShader(rect);
+    // Soft glow under the arc, then the crisp gradient stroke on top.
+    canvas.drawArc(
+      arc,
+      -math.pi / 2,
+      sweep,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke
+        ..strokeCap = StrokeCap.round
+        ..color = color.withValues(alpha: 0.55)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+    );
+    canvas.drawArc(
+      arc,
+      -math.pi / 2,
+      sweep,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke
+        ..strokeCap = StrokeCap.round
+        ..shader = shader,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_RingPainter old) =>
+      old.progress != progress || old.color != color;
+}
+
+String _greeting() {
+  final hour = DateTime.now().hour;
+  if (hour < 5) return 'Working late';
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
 }
 
 class _StatTile extends StatelessWidget {
@@ -224,20 +346,22 @@ class _StatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
-      onTap: onTap,
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
-          ),
-          MutedText(label, size: 12.5),
-        ],
+    return Tilt3D(
+      child: AppCard(
+        onTap: onTap,
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color, size: 22),
+            const SizedBox(height: 10),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+            ),
+            MutedText(label, size: 12.5),
+          ],
+        ),
       ),
     );
   }

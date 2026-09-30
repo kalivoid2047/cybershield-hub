@@ -276,6 +276,10 @@ void main() {
 
   Future<void> pumpApp(WidgetTester tester) async {
     FlutterSecureStorage.setMockInitialValues({});
+    // Ambient animations (aurora, 3D sway) never settle; honour "reduce motion" in tests.
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
     tester.view.physicalSize = const Size(400, 850);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -304,12 +308,7 @@ void main() {
   }
 
   Future<void> goTab(WidgetTester tester, String label) async {
-    await tester.tap(
-      find.descendant(
-        of: find.byType(NavigationBar),
-        matching: find.text(label),
-      ),
-    );
+    await tester.tap(find.byKey(Key('nav-$label')));
     await tester.pumpAndSettle();
   }
 
@@ -451,6 +450,8 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
+    await tester.ensureVisible(find.text('Creates urgency'));
+    await tester.pump();
     await tester.tap(find.text('Creates urgency'));
     await tester.pump();
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'api/api_client.dart';
@@ -9,9 +10,20 @@ import 'state/alerts_state.dart';
 import 'state/auth_state.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
+import 'widgets/glass.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  // Edge-to-edge: the aurora background runs under transparent system bars.
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ),
+  );
   final client = ApiClient();
   final api = CyberShieldApi(client);
   final auth = AuthState(client, api)..bootstrap();
@@ -43,6 +55,7 @@ class CyberShieldApp extends StatelessWidget {
         title: 'CyberShield Hub',
         debugShowCheckedModeBanner: false,
         theme: buildTheme(),
+        builder: (context, child) => AuroraBackground(child: child!),
         home: const _Root(),
       ),
     );
