@@ -14,6 +14,9 @@ export default function QuizTakePage() {
   const [answers, setAnswers] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [attemptId, setAttemptId] = useState(null);
+  const [blocked, setBlocked] = useState(null);
+  const [lastAttempt, setLastAttempt] = useState(null);
+  const [submitError, setSubmitError] = useState(null);
   const [seconds, setSeconds] = useState(0);
 
   useEffect(() => {
@@ -27,8 +30,17 @@ export default function QuizTakePage() {
           const elapsed = Math.floor((Date.now() - Date.parse(attempt.started_at)) / 1000);
           if (Number.isFinite(elapsed)) setSeconds(Math.max(0, Math.min(elapsed, (data.time_limit_minutes || 10) * 60)));
         })
-        // The quiz still works without a started attempt; it just won't record a duration.
-        .catch(() => setAttemptId(null));
+        .catch((error) => {
+          // Out of attempts: don't let them fill in a quiz that will be refused on submit.
+          if (error.response?.status === 403) {
+            setBlocked(error.response.data?.error?.message || "You have used all of your attempts for this quiz.");
+            // Newest first; purely a convenience link, so ignore failures.
+            quizService.attemptsFor(id).then((attempts) => setLastAttempt(attempts.find((item) => item.completed_at) || null)).catch(() => {});
+            return;
+          }
+          // Any other failure: the quiz still works, it just won't record a duration.
+          setAttemptId(null);
+        });
     });
   }, [id]);
 
@@ -51,15 +63,42 @@ export default function QuizTakePage() {
       })),
     };
     setSubmitting(true);
+    setSubmitError(null);
     try {
       const result = await quizService.submit(id, payload);
       navigate(`/quizzes/results/${result.id}`, { state: { result } });
+    } catch (error) {
+      setSubmitError(error.response?.data?.error?.message || "We couldn't submit your answers. Please try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
   if (!quiz) return null;
+
+  if (blocked) {
+    return (
+      <div>
+        <PageHeader eyebrow="No attempts left" title={quiz.title} description={blocked} />
+        <Card>
+          <p className="text-sm text-slate-300">
+            Ask an administrator if you need another attempt.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            {lastAttempt && (
+              <Button as={Link} to={`/quizzes/results/${lastAttempt.id}`}>
+                View last result
+              </Button>
+            )}
+            <Button as={Link} to="/quizzes" variant="secondary">
+              <ArrowLeft className="h-4 w-4" />
+              All quizzes
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -127,6 +166,16 @@ export default function QuizTakePage() {
               <Send className="h-4 w-4" />
               {submitting ? "Submitting..." : "Submit"}
             </Button>
+            {submitError && (
+              <p role="alert" className="mt-3 rounded-md border border-rose-300/20 bg-rose-500/10 p-3 text-sm text-rose-100">
+                {submitError}
+              </p>
+            )}
+            {quiz.max_attempts > 0 && (
+              <p className="mt-3 text-center text-xs text-slate-400">
+                Attempt {Math.min((quiz.attempts_used ?? 0) + 1, quiz.max_attempts)} of {quiz.max_attempts}
+              </p>
+            )}
           </Card>
         </aside>
       </div>

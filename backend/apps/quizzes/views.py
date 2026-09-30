@@ -11,7 +11,7 @@ from apps.common.permissions import IsAdminOrReadOnly, IsOwnerOrOfficer
 from apps.common.responses import ok
 from apps.quizzes.models import Quiz, QuizAttempt
 from apps.quizzes.serializers import QuizAdminSerializer, QuizAttemptSerializer, QuizDetailSerializer, QuizListSerializer, SubmitQuizSerializer
-from apps.quizzes.services import grade_quiz_attempt
+from apps.quizzes.services import ensure_can_attempt, grade_quiz_attempt
 
 
 class QuizViewSet(viewsets.ModelViewSet):
@@ -21,9 +21,15 @@ class QuizViewSet(viewsets.ModelViewSet):
     ordering_fields = ["title", "created_at", "time_limit_minutes"]
 
     def get_queryset(self):
-        qs = Quiz.objects.annotate(question_count=Count("questions")).prefetch_related("questions__answers")
+        # distinct=True: the questions and attempts joins would otherwise multiply each other's counts.
+        qs = Quiz.objects.annotate(question_count=Count("questions", distinct=True)).prefetch_related("questions__answers")
         if self.request.user.is_authenticated:
-            qs = qs.annotate(best_score=Max("attempts__score", filter=Q(attempts__user=self.request.user)))
+            qs = qs.annotate(
+                best_score=Max("attempts__score", filter=Q(attempts__user=self.request.user)),
+                attempts_used=Count(
+                    "attempts", filter=Q(attempts__user=self.request.user, attempts__completed_at__isnull=False), distinct=True
+                ),
+            )
         if self.request.method == "GET" and not self.request.user.is_staff:
             qs = qs.filter(is_active=True)
         return qs
@@ -50,6 +56,7 @@ class QuizViewSet(viewsets.ModelViewSet):
             .first()
         )
         if attempt is None:
+            ensure_can_attempt(request.user, quiz)
             attempt = QuizAttempt.objects.create(user=request.user, quiz=quiz)
         return ok(QuizAttemptSerializer(attempt, context={"request": request}).data, "Quiz attempt started.")
 
@@ -58,6 +65,9 @@ class QuizViewSet(viewsets.ModelViewSet):
         quiz = self.get_object()
         serializer = SubmitQuizSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        # Checked for every submit, not just start: it also covers submitting without an
+        # attempt id and a second open attempt slipping past the limit.
+        ensure_can_attempt(request.user, quiz)
         attempt_id = request.data.get("attempt_id")
         if attempt_id:
             attempt = get_object_or_404(QuizAttempt, id=attempt_id, user=request.user, quiz=quiz)

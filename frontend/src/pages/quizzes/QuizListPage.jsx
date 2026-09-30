@@ -54,9 +54,22 @@ export default function QuizListPage() {
               </div>
               <ProgressBar value={quiz.best_score || 0} />
             </div>
-            <Button as={Link} to={`/quizzes/${quiz.id}`} className="mt-5">
-              Start assessment
-            </Button>
+            {quiz.max_attempts > 0 && (
+              <p className="mt-4 text-xs text-slate-400">
+                {quiz.attempts_remaining === 0
+                  ? `All ${quiz.max_attempts} attempts used`
+                  : `${quiz.attempts_used} of ${quiz.max_attempts} attempts used`}
+              </p>
+            )}
+            {quiz.attempts_remaining === 0 ? (
+              <Button className="mt-3" disabled>
+                No attempts left
+              </Button>
+            ) : (
+              <Button as={Link} to={`/quizzes/${quiz.id}`} className="mt-3">
+                Start assessment
+              </Button>
+            )}
           </Card>
         ))}
       </div>

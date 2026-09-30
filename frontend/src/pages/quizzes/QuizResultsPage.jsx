@@ -107,10 +107,18 @@ export default function QuizResultsPage() {
               </dl>
             )}
             <div className="mt-5 space-y-3">
-              <Button as={Link} to={`/quizzes/${result.quiz}`} className="w-full">
-                <RotateCcw className="h-4 w-4" />
-                Retake quiz
-              </Button>
+              {result.attempts_remaining === 0 ? (
+                <Button className="w-full" disabled>
+                  <RotateCcw className="h-4 w-4" />
+                  No attempts left
+                </Button>
+              ) : (
+                <Button as={Link} to={`/quizzes/${result.quiz}`} className="w-full">
+                  <RotateCcw className="h-4 w-4" />
+                  Retake quiz
+                </Button>
+              )}
+              {result.attempts_remaining > 0 && <p className="text-center text-xs text-slate-400">{result.attempts_remaining} attempt{result.attempts_remaining === 1 ? "" : "s"} remaining</p>}
               {result.lesson_slug && (
                 <Button as={Link} to={`/training/${result.lesson_slug}`} variant="secondary" className="w-full">
                   <BookOpen className="h-4 w-4" />

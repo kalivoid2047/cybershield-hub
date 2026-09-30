@@ -73,6 +73,7 @@ export const trainingService = {
 };
 
 export const quizService = {
+  attemptsFor: (quizId) => apiClient.get(`/quizzes/quizzes/${quizId}/attempts/`).then(unwrap),
   attempt: (id) => apiClient.get(`/quizzes/attempts/${id}/`).then(unwrap),
   // Opens (or resumes) a server-side attempt so duration is measured from when the quiz was opened.
   start: (id) => withFallback(() => apiClient.post(`/quizzes/quizzes/${id}/start/`), () => ({ id: null })),

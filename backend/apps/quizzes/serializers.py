@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from apps.quizzes.models import AnswerOption, Question, Quiz, QuizAttempt, QuizAttemptAnswer
+from apps.quizzes.services import attempts_remaining
 
 
 class AnswerOptionSerializer(serializers.ModelSerializer):
@@ -62,7 +63,26 @@ class QuestionAdminSerializer(serializers.ModelSerializer):
         return instance
 
 
-class QuizListSerializer(serializers.ModelSerializer):
+class AttemptUsageMixin(serializers.Serializer):
+    """Adds attempts_used / attempts_remaining for the requesting user.
+
+    ``attempts_used`` comes from a queryset annotation (see QuizViewSet.get_queryset), so
+    lists do not query per quiz. ``attempts_remaining`` is ``None`` for unlimited quizzes.
+    """
+
+    attempts_used = serializers.SerializerMethodField()
+    attempts_remaining = serializers.SerializerMethodField()
+
+    def get_attempts_used(self, obj):
+        return getattr(obj, "attempts_used", 0)
+
+    def get_attempts_remaining(self, obj):
+        if not obj.max_attempts:
+            return None
+        return max(0, obj.max_attempts - getattr(obj, "attempts_used", 0))
+
+
+class QuizListSerializer(AttemptUsageMixin, serializers.ModelSerializer):
     question_count = serializers.IntegerField(read_only=True)
     best_score = serializers.DecimalField(max_digits=5, decimal_places=2, read_only=True)
 
@@ -79,10 +99,12 @@ class QuizListSerializer(serializers.ModelSerializer):
             "is_active",
             "question_count",
             "best_score",
+            "attempts_used",
+            "attempts_remaining",
         ]
 
 
-class QuizDetailSerializer(serializers.ModelSerializer):
+class QuizDetailSerializer(AttemptUsageMixin, serializers.ModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
 
     class Meta:
@@ -99,6 +121,8 @@ class QuizDetailSerializer(serializers.ModelSerializer):
             "max_attempts",
             "is_active",
             "randomize_questions",
+            "attempts_used",
+            "attempts_remaining",
             "questions",
             "created_at",
             "updated_at",
@@ -185,7 +209,12 @@ class QuizAttemptSerializer(serializers.ModelSerializer):
     pass_score = serializers.IntegerField(source="quiz.pass_score", read_only=True)
     lesson_slug = serializers.CharField(source="quiz.lesson.slug", read_only=True)
     lesson_title = serializers.CharField(source="quiz.lesson.title", read_only=True)
+    attempts_remaining = serializers.SerializerMethodField()
     answers = QuizAttemptAnswerSerializer(many=True, read_only=True)
+
+    def get_attempts_remaining(self, obj):
+        # One count query, and only for quizzes that actually have a limit.
+        return attempts_remaining(obj.user, obj.quiz)
 
     class Meta:
         model = QuizAttempt
@@ -196,6 +225,7 @@ class QuizAttemptSerializer(serializers.ModelSerializer):
             "pass_score",
             "lesson_slug",
             "lesson_title",
+            "attempts_remaining",
             "score",
             "total_points",
             "earned_points",

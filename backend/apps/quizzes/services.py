@@ -1,7 +1,29 @@
 from django.db import transaction
 from django.utils import timezone
+from rest_framework.exceptions import PermissionDenied
 
-from apps.quizzes.models import AnswerOption, QuizAttemptAnswer
+from apps.quizzes.models import AnswerOption, QuizAttempt, QuizAttemptAnswer
+
+
+class MaxAttemptsReached(PermissionDenied):
+    default_code = "max_attempts_reached"
+    default_detail = "You have used all of your attempts for this quiz."
+
+
+def attempts_remaining(user, quiz):
+    """Attempts the user has left on ``quiz``; ``None`` when the quiz is unlimited.
+
+    Only completed attempts count, so opening a quiz and leaving does not burn one.
+    """
+    if not quiz.max_attempts:
+        return None
+    used = QuizAttempt.objects.filter(user=user, quiz=quiz, completed_at__isnull=False).count()
+    return max(0, quiz.max_attempts - used)
+
+
+def ensure_can_attempt(user, quiz):
+    if attempts_remaining(user, quiz) == 0:
+        raise MaxAttemptsReached()
 
 
 @transaction.atomic
