@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from apps.common.slugs import unique_slug
 from apps.quizzes.models import AnswerOption, Question, Quiz, QuizAttempt, QuizAttemptAnswer
 from apps.quizzes.services import attempts_remaining
 
@@ -14,6 +15,9 @@ class AnswerOptionSerializer(serializers.ModelSerializer):
 
 
 class AnswerOptionAdminSerializer(serializers.ModelSerializer):
+    # Writable so an edit can update an existing answer instead of recreating it.
+    id = serializers.IntegerField(required=False)
+
     class Meta:
         model = AnswerOption
         fields = ["id", "text", "is_correct", "order"]
@@ -41,7 +45,15 @@ class QuestionSerializer(serializers.ModelSerializer):
 
 
 class QuestionAdminSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
     answers = AnswerOptionAdminSerializer(many=True)
+
+    def validate_answers(self, value):
+        if len(value) < 2:
+            raise serializers.ValidationError("Give each question at least two answer options.")
+        if sum(1 for item in value if item.get("is_correct")) != 1:
+            raise serializers.ValidationError("Mark exactly one answer as correct.")
+        return value
 
     class Meta:
         model = Question
@@ -137,6 +149,7 @@ class QuizAdminSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Quiz
+        extra_kwargs = {"slug": {"required": False}}
         fields = [
             "id",
             "title",
@@ -171,12 +184,10 @@ class QuizAdminSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         questions_data = validated_data.pop("questions", [])
+        if not validated_data.get("slug"):
+            validated_data["slug"] = unique_slug(Quiz, validated_data["title"], max_length=240, fallback="quiz")
         quiz = Quiz.objects.create(**validated_data)
-        for question_data in questions_data:
-            answers_data = question_data.pop("answers", [])
-            question = Question.objects.create(quiz=quiz, **question_data)
-            for answer_data in answers_data:
-                AnswerOption.objects.create(question=question, **answer_data)
+        self._sync_questions(quiz, questions_data)
         return quiz
 
     def update(self, instance, validated_data):
@@ -185,13 +196,46 @@ class QuizAdminSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         if questions_data is not None:
-            instance.questions.all().delete()
-            for question_data in questions_data:
-                answers_data = question_data.pop("answers", [])
-                question = Question.objects.create(quiz=instance, **question_data)
-                for answer_data in answers_data:
-                    AnswerOption.objects.create(question=question, **answer_data)
+            self._sync_questions(instance, questions_data)
         return instance
+
+    @staticmethod
+    def _sync_questions(quiz, questions_data):
+        """Make the quiz's questions match `questions_data`, keeping rows that carry a known id.
+
+        Updating in place (rather than delete + recreate) preserves existing attempts'
+        per-question history; only questions/answers that were removed are deleted.
+        """
+        existing = {question.id: question for question in quiz.questions.all()}
+        kept = set()
+        for position, question_data in enumerate(questions_data):
+            answers_data = question_data.pop("answers", [])
+            question_id = question_data.pop("id", None)
+            question_data.setdefault("order", position)
+            question = existing.get(question_id)
+            if question:
+                for attr, value in question_data.items():
+                    setattr(question, attr, value)
+                question.save()
+            else:
+                question = Question.objects.create(quiz=quiz, **question_data)
+            kept.add(question.id)
+
+            existing_answers = {answer.id: answer for answer in question.answers.all()}
+            kept_answers = set()
+            for answer_position, answer_data in enumerate(answers_data):
+                answer_id = answer_data.pop("id", None)
+                answer_data.setdefault("order", answer_position)
+                answer = existing_answers.get(answer_id)
+                if answer:
+                    for attr, value in answer_data.items():
+                        setattr(answer, attr, value)
+                    answer.save()
+                else:
+                    answer = AnswerOption.objects.create(question=question, **answer_data)
+                kept_answers.add(answer.id)
+            question.answers.exclude(id__in=kept_answers).delete()
+        quiz.questions.exclude(id__in=kept).delete()
 
 
 class QuizAttemptAnswerSerializer(serializers.ModelSerializer):

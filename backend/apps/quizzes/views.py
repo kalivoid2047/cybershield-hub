@@ -7,7 +7,7 @@ from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 
-from apps.common.permissions import IsAdminOrReadOnly, IsOwnerOrOfficer
+from apps.common.permissions import IsAdminOrReadOnly, IsOwnerOrOfficer, IsSystemAdmin
 from apps.common.responses import ok
 from apps.quizzes.models import Quiz, QuizAttempt
 from apps.quizzes.serializers import QuizAdminSerializer, QuizAttemptSerializer, QuizDetailSerializer, QuizListSerializer, SubmitQuizSerializer
@@ -43,6 +43,12 @@ class QuizViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+
+    @action(detail=True, methods=["get"], permission_classes=[IsSystemAdmin])
+    def editor(self, request, pk=None):
+        """Full quiz including which answers are correct, for the admin editor."""
+        quiz = self.get_object()
+        return ok(QuizAdminSerializer(quiz, context={"request": request}).data)
 
     @action(detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated])
     def start(self, request, pk=None):

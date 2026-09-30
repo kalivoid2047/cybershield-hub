@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from apps.common.slugs import unique_slug
 from apps.training.models import Lesson, LessonBookmark, LessonCategory, LessonProgress
 
 
@@ -20,6 +21,7 @@ class LessonSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Lesson
+        extra_kwargs = {"slug": {"required": False}}
         fields = [
             "id",
             "category",
@@ -40,6 +42,21 @@ class LessonSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
+    def validate_tags(self, value):
+        if not isinstance(value, list) or not all(isinstance(tag, str) for tag in value):
+            raise serializers.ValidationError("Tags must be a list of text values.")
+        return [tag.strip() for tag in value if tag.strip()][:20]
+
+    def validate_recommended_for_roles(self, value):
+        if not isinstance(value, list) or not all(isinstance(role, str) for role in value):
+            raise serializers.ValidationError("Roles must be a list of role codes.")
+        return value
+
+    def create(self, validated_data):
+        if not validated_data.get("slug"):
+            validated_data["slug"] = unique_slug(Lesson, validated_data["title"], max_length=240, fallback="lesson")
+        return super().create(validated_data)
 
     def get_quizzes(self, obj):
         quizzes = getattr(obj, "active_quizzes", None)
