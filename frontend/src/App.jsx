@@ -24,6 +24,7 @@ const AuditLogPage = lazy(() => import("./pages/admin/AuditLogPage.jsx"));
 const QuizSettingsPage = lazy(() => import("./pages/admin/QuizSettingsPage.jsx"));
 const UsersAdminPage = lazy(() => import("./pages/admin/UsersAdminPage.jsx"));
 const IncidentDetailPage = lazy(() => import("./pages/incidents/IncidentDetailPage.jsx"));
+const AccountPage = lazy(() => import("./pages/account/AccountPage.jsx"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage.jsx"));
 
 function PageFallback() {
@@ -80,6 +81,7 @@ export default function App() {
           }
         />
         <Route path="/alerts" element={<AlertsPage />} />
+        <Route path="/account" element={<AccountPage />} />
         <Route
           path="/admin/users"
           element={

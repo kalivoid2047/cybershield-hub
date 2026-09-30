@@ -13,6 +13,7 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [verifyToken, setVerifyToken] = useState("");
   const [errors, setErrors] = useState({});
   const [form, setForm] = useState({
     username: "",
@@ -43,9 +44,16 @@ export default function RegisterPage() {
     setErrors({});
     const username = form.username || form.email.split("@")[0];
     try {
-      await register({ ...form, username });
-      setMessage("Account created. Redirecting you to sign in…");
-      setTimeout(() => navigate("/login"), 1200);
+      const created = await register({ ...form, username });
+      const debugToken = created?.debug_email_verification_token;
+      if (debugToken) {
+        // Only present when the API runs in DEBUG (no mail server): let developers verify in one click.
+        setVerifyToken(debugToken);
+        setMessage("Account created.");
+      } else {
+        setMessage("Account created. Check your email to verify your address. Redirecting you to sign in…");
+        setTimeout(() => navigate("/login"), 2500);
+      }
     } catch (err) {
       const fields = fieldErrors(err);
       setErrors(fields);
@@ -78,7 +86,23 @@ export default function RegisterPage() {
           required
         />
         {error && <Alert tone="error">{error}</Alert>}
-        {message && <Alert tone="success">{message}</Alert>}
+        {message && (
+          <Alert tone="success">
+            {message}
+            {verifyToken && (
+              <>
+                {" "}
+                <Link className="font-semibold underline" to={`/verify-email?token=${verifyToken}`}>
+                  Verify email (development shortcut)
+                </Link>
+                {" · "}
+                <Link className="font-semibold underline" to="/login">
+                  Sign in
+                </Link>
+              </>
+            )}
+          </Alert>
+        )}
         <Button disabled={loading || Boolean(message)} type="submit">
           {loading ? "Creating..." : "Create account"}
         </Button>

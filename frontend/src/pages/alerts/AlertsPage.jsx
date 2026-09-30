@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Bell, CheckCheck, Megaphone, SearchX, ShieldAlert } from "lucide-react";
+import { Bell, CheckCheck, Megaphone, Plus, SearchX, ShieldAlert } from "lucide-react";
 import clsx from "clsx";
 import Button from "../../components/common/Button.jsx";
 import Card from "../../components/common/Card.jsx";
@@ -10,7 +10,9 @@ import PageHeader from "../../components/common/PageHeader.jsx";
 import { SkeletonCards } from "../../components/common/Skeleton.jsx";
 import StatusBadge from "../../components/common/StatusBadge.jsx";
 import { useToast } from "../../components/common/Toast.jsx";
+import PublishAlertDialog from "../../components/alerts/PublishAlertDialog.jsx";
 import { useAlerts } from "../../contexts/AlertsContext.jsx";
+import { useAuth } from "../../contexts/AuthContext.jsx";
 import { errorMessage } from "../../utils/errors.js";
 import { formatDate, titleCase } from "../../utils/formatters.js";
 
@@ -32,6 +34,8 @@ function AlertIcon({ type }) {
 export default function AlertsPage() {
   const { notifications, unread, loading, error, reload, markRead, markAllRead } = useAlerts();
   const toast = useToast();
+  const { role } = useAuth();
+  const [publishing, setPublishing] = useState(false);
   const [query, setQuery] = useState("");
   const [priority, setPriority] = useState("all");
   const [type, setType] = useState("all");
@@ -76,10 +80,18 @@ export default function AlertsPage() {
         title="Security Alerts"
         description="Threat advisories, announcements, daily cyber tips, and priority alert visibility."
         actions={
-          <Button variant="secondary" onClick={handleMarkAll} disabled={unread === 0}>
-            <CheckCheck className="h-4 w-4" />
-            Mark all read{unread > 0 ? ` (${unread})` : ""}
-          </Button>
+          <>
+            {role === "system_admin" && (
+              <Button onClick={() => setPublishing(true)}>
+                <Plus className="h-4 w-4" />
+                Publish alert
+              </Button>
+            )}
+            <Button variant="secondary" onClick={handleMarkAll} disabled={unread === 0}>
+              <CheckCheck className="h-4 w-4" />
+              Mark all read{unread > 0 ? ` (${unread})` : ""}
+            </Button>
+          </>
         }
       />
       <Card className="mb-6">
@@ -175,6 +187,16 @@ export default function AlertsPage() {
             );
           })}
         </ul>
+      )}
+      {publishing && (
+        <PublishAlertDialog
+          onClose={() => setPublishing(false)}
+          onPublished={() => {
+            setPublishing(false);
+            reload();
+            toast.success("Alert published.");
+          }}
+        />
       )}
     </div>
   );

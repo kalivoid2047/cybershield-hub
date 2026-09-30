@@ -62,6 +62,12 @@ export function AuthProvider({ children }) {
     }
   }
 
+  // Replace the cached profile after a self-service edit.
+  function updateUser(profile) {
+    localStorage.setItem("cybershield.user", JSON.stringify(profile));
+    setUser(profile);
+  }
+
   async function logout() {
     const refresh = localStorage.getItem("cybershield.refresh");
     await authService.logout(refresh);
@@ -81,6 +87,7 @@ export function AuthProvider({ children }) {
       logout,
       register,
       setUser,
+      updateUser,
     }),
     [user, loading],
   );

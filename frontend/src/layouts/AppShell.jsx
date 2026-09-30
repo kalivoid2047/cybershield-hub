@@ -2,6 +2,8 @@ import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Bell, LogOut, Menu, ShieldCheck, X } from "lucide-react";
 import clsx from "clsx";
+import { motion } from "framer-motion";
+import SceneBackground from "../components/common/SceneBackground.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { AlertsProvider, useAlerts } from "../contexts/AlertsContext.jsx";
 import useMediaQuery from "../hooks/useMediaQuery.js";
@@ -26,13 +28,13 @@ function Sidebar({ open, isDesktop, onClose, closeRef }) {
       id="app-sidebar"
       inert={hidden ? "" : undefined}
       className={clsx(
-        "fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-white/10 bg-void/95 p-4 backdrop-blur-xl transition motion-reduce:transition-none lg:sticky lg:top-0 lg:h-screen lg:translate-x-0",
+        "glass-strong fixed inset-y-0 left-0 z-50 flex w-72 flex-col rounded-r-3xl p-4 transition motion-reduce:transition-none lg:sticky lg:top-3 lg:m-3 lg:h-[calc(100vh-1.5rem)] lg:shrink-0 lg:translate-x-0 lg:self-start lg:rounded-3xl",
         open ? "translate-x-0" : "-translate-x-full",
       )}
     >
       <div className="mb-6 flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md border border-cyanx/30 bg-cyanx/12 text-cyanx shadow-glow">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-cyanx/40 bg-gradient-to-br from-cyanx/30 to-violetx/20 text-cyanx shadow-glow">
             <ShieldCheck className="h-6 w-6" aria-hidden="true" />
           </div>
           <div>
@@ -61,8 +63,10 @@ function Sidebar({ open, isDesktop, onClose, closeRef }) {
                     onClick={() => onClose(false)}
                     className={({ isActive }) =>
                       clsx(
-                        "flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition",
-                        isActive ? "bg-cyanx/14 text-white shadow-glow" : "text-slate-400 hover:bg-white/7 hover:text-white",
+                        "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition",
+                        isActive
+                          ? "bg-gradient-to-r from-cyanx/25 to-cyanx/5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,.14),0_0_24px_rgba(45,212,255,.18)] ring-1 ring-cyanx/30"
+                          : "text-slate-300 hover:bg-white/8 hover:text-white",
                       )
                     }
                   >
@@ -82,8 +86,13 @@ function Sidebar({ open, isDesktop, onClose, closeRef }) {
         })}
       </nav>
 
-      <div className="mt-4 shrink-0 rounded-lg border border-white/10 bg-white/[0.035] p-3">
-        <div className="flex items-center gap-3">
+      <div className="glass-tile mt-4 shrink-0 rounded-2xl p-3">
+        <NavLink
+          to="/account"
+          onClick={() => onClose(false)}
+          aria-label="Account and security settings"
+          className="focus-ring -m-1 flex items-center gap-3 rounded-md p-1 transition hover:bg-white/8"
+        >
           <div className="flex h-10 w-10 items-center justify-center rounded-md bg-mint/15 text-sm font-bold text-mint" aria-hidden="true">
             {initials(user)}
           </div>
@@ -93,7 +102,7 @@ function Sidebar({ open, isDesktop, onClose, closeRef }) {
             </p>
             <p className="truncate text-xs text-slate-400">{user?.email}</p>
           </div>
-        </div>
+        </NavLink>
         <button
           type="button"
           onClick={handleLogout}
@@ -115,8 +124,8 @@ function ShellHeader({ onOpenNav, menuRef }) {
   const score = user?.security_score || 0;
 
   return (
-    <header className="sticky top-0 z-30 border-b border-white/10 bg-void/75 backdrop-blur-xl">
-      <div className="flex min-h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-3 z-30 px-4 pt-3 sm:px-6 lg:px-8">
+      <div className="glass-strong flex min-h-16 items-center justify-between gap-4 rounded-2xl px-4 sm:px-5">
         <div className="flex min-w-0 items-center gap-2">
           <button
             ref={menuRef}
@@ -136,7 +145,7 @@ function ShellHeader({ onOpenNav, menuRef }) {
         <div className="flex items-center gap-2 sm:gap-3">
           <Link
             to="/"
-            className="focus-ring rounded-md border border-cyanx/20 bg-cyanx/10 px-3 py-2 text-sm text-cyanx"
+            className="focus-ring rounded-xl border border-cyanx/30 bg-gradient-to-b from-cyanx/20 to-cyanx/5 px-3 py-2 text-sm text-cyanx shadow-[inset_0_1px_0_rgba(255,255,255,.14)]"
             aria-label={`Security score ${score} out of 100, based on training, quizzes, phishing simulations and open incidents`}
             title="Security score: based on training, quizzes, phishing simulations and open incidents"
           >
@@ -145,7 +154,7 @@ function ShellHeader({ onOpenNav, menuRef }) {
           </Link>
           <Link
             to="/alerts"
-            className="focus-ring relative rounded-md border border-white/10 p-2.5 text-slate-300 transition hover:bg-white/8 hover:text-white"
+            className="focus-ring relative rounded-xl border border-white/12 bg-white/[0.05] p-2.5 text-slate-300 transition hover:bg-white/10 hover:text-white"
             aria-label={unread > 0 ? `Alerts, ${unread} unread` : "Alerts"}
           >
             <Bell className="h-5 w-5" aria-hidden="true" />
@@ -212,20 +221,22 @@ function Shell() {
   const backgroundInert = !isDesktop && open ? "" : undefined;
 
   return (
-    <div className="min-h-screen lg:flex">
+    <div className="relative min-h-screen lg:flex">
+      <SceneBackground />
       <a href="#main-content" className="skip-link">
         Skip to main content
       </a>
       <Sidebar open={open} isDesktop={isDesktop} onClose={closeNav} closeRef={closeRef} />
       {open && <button type="button" aria-label="Close navigation overlay" className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={() => closeNav(true)} />}
 
-      <div className="relative min-w-0 flex-1 overflow-x-clip" inert={backgroundInert}>
-        <div className="grid-floor pointer-events-none absolute inset-x-0 top-0 h-72" aria-hidden="true" />
+      <div className="relative z-10 min-w-0 flex-1 overflow-x-clip" inert={backgroundInert}>
         <ShellHeader onOpenNav={() => setOpen(true)} menuRef={menuRef} />
         <main id="main-content" ref={mainRef} tabIndex={-1} className="relative z-10 px-4 py-6 sm:px-6 lg:px-8">
-          <Suspense fallback={<p className="text-sm text-slate-400" role="status">Loading…</p>}>
-            <Outlet />
-          </Suspense>
+          <motion.div key={location.pathname} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28, ease: "easeOut" }}>
+            <Suspense fallback={<p className="text-sm text-slate-400" role="status">Loading…</p>}>
+              <Outlet />
+            </Suspense>
+          </motion.div>
         </main>
       </div>
     </div>

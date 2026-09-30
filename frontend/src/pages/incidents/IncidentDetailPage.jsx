@@ -1,5 +1,6 @@
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, FileText, Paperclip } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, FileText, Paperclip, Send } from "lucide-react";
 import Button from "../../components/common/Button.jsx";
 import Card from "../../components/common/Card.jsx";
 import EmptyState from "../../components/common/EmptyState.jsx";
@@ -8,7 +9,10 @@ import PageHeader from "../../components/common/PageHeader.jsx";
 import { Skeleton } from "../../components/common/Skeleton.jsx";
 import StatusBadge from "../../components/common/StatusBadge.jsx";
 import useAsync from "../../hooks/useAsync.js";
+import { useToast } from "../../components/common/Toast.jsx";
+import { useAuth } from "../../contexts/AuthContext.jsx";
 import { incidentService } from "../../services/cyberShieldApi.js";
+import { errorMessage } from "../../utils/errors.js";
 import { formatDate, titleCase } from "../../utils/formatters.js";
 
 function actorName(actor) {
@@ -20,6 +24,22 @@ function actorName(actor) {
 export default function IncidentDetailPage() {
   const { id } = useParams();
   const { data: incident, loading, error, reload } = useAsync(() => incidentService.detail(id), [id]);
+  const { user } = useAuth();
+  const toast = useToast();
+  const [submitting, setSubmitting] = useState(false);
+
+  async function submitDraft() {
+    setSubmitting(true);
+    try {
+      await incidentService.submit(id);
+      toast.success("Incident submitted. The security team has been notified.");
+      reload();
+    } catch (err) {
+      toast.error(errorMessage(err, "We couldn't submit this report."));
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   const back = (
     <Button as={Link} to="/incidents" variant="secondary">
@@ -56,11 +76,27 @@ export default function IncidentDetailPage() {
     );
   }
 
+  const canSubmitDraft = incident.is_draft && incident.reporter?.id === user?.id;
   const updates = [...(incident.updates || [])].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
   return (
     <div>
-      <PageHeader eyebrow={incident.reference_number} title={incident.title} description={incident.category?.name} actions={back} />
+      <PageHeader
+        eyebrow={incident.reference_number}
+        title={incident.title}
+        description={incident.is_draft ? `${incident.category?.name || "Incident"} · Draft, not yet visible to the security team` : incident.category?.name}
+        actions={
+          <>
+            {canSubmitDraft && (
+              <Button onClick={submitDraft} disabled={submitting}>
+                <Send className="h-4 w-4" />
+                {submitting ? "Submitting..." : "Submit report"}
+              </Button>
+            )}
+            {back}
+          </>
+        }
+      />
       <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
         <div className="space-y-6">
           <Card>
@@ -100,7 +136,7 @@ export default function IncidentDetailPage() {
             <h2 className="mb-4 font-semibold text-white">Details</h2>
             <div className="mb-4 flex flex-wrap gap-2">
               <StatusBadge value={incident.severity} />
-              <StatusBadge value={incident.status} />
+              <StatusBadge value={incident.is_draft ? "draft" : incident.status} />
             </div>
             <dl className="space-y-3 text-sm">
               {[

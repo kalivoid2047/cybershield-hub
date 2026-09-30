@@ -62,7 +62,7 @@ export default function Dialog({ open, onClose, title, description, children }) 
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
         tabIndex={-1}
-        className="glass-panel relative flex h-full w-full max-w-md flex-col overflow-y-auto border-l border-white/10 bg-panel p-5 outline-none"
+        className="glass-strong relative flex h-full w-full max-w-md flex-col overflow-y-auto rounded-l-3xl p-5 outline-none"
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="min-w-0">

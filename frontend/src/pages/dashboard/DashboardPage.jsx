@@ -11,6 +11,8 @@ import { Skeleton } from "../../components/common/Skeleton.jsx";
 import StatusBadge from "../../components/common/StatusBadge.jsx";
 import DoughnutChart from "../../components/charts/DoughnutChart.jsx";
 import RadarScoreChart from "../../components/charts/RadarScoreChart.jsx";
+import TiltCard from "../../components/common/TiltCard.jsx";
+import Shield3D from "../../components/three/Shield3D.jsx";
 import { useAlerts } from "../../contexts/AlertsContext.jsx";
 import { useAuth } from "../../contexts/AuthContext.jsx";
 import useAsync from "../../hooks/useAsync.js";
@@ -92,11 +94,11 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {summary.error && <LoadError error={summary.error} message="We couldn't load your progress summary." onRetry={summary.reload} />}
-      <motion.section initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="glass-panel overflow-hidden rounded-lg p-6">
+      <motion.section initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="glass-panel overflow-hidden rounded-3xl p-6 md:p-8">
         <div className="grid gap-6 lg:grid-cols-[1.3fr_.7fr] lg:items-start">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyanx">Security dashboard</p>
-            <h1 className="mt-3 text-3xl font-bold text-white md:text-4xl">Welcome back, {user?.first_name || "Analyst"}</h1>
+            <h1 className="mt-3 text-3xl font-bold text-gradient md:text-4xl">Welcome back, {user?.first_name || "Analyst"}</h1>
             <div className="mt-6">
               <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
                 <Sparkles className="h-4 w-4 text-amberx" aria-hidden="true" />
@@ -130,15 +132,18 @@ export default function DashboardPage() {
               )}
             </div>
           </div>
-          <div className="rounded-lg border border-cyanx/20 bg-cyanx/8 p-5">
+          <TiltCard className="glass-tile relative overflow-hidden rounded-2xl border-cyanx/25 p-5 text-center">
             <div className="flex items-center justify-between">
               <p className="text-sm text-slate-300">Security score</p>
               <ShieldCheck className="h-5 w-5 text-cyanx" aria-hidden="true" />
             </div>
-            {loadingSummary ? <Skeleton className="mt-4 h-14 w-24" /> : <p className="mt-4 text-6xl font-bold text-white">{score}</p>}
-            <ProgressBar className="mt-5" value={score} />
+            <div className="parallax -my-3 flex justify-center">
+              <Shield3D size={200} />
+            </div>
+            {loadingSummary ? <Skeleton className="mx-auto h-14 w-24" /> : <p className="text-6xl font-bold text-gradient">{score}</p>}
+            <ProgressBar className="mt-4" value={score} />
             <p className="mt-3 text-sm text-slate-400">Based on lessons completed (35%), quiz results (35%), phishing simulations (20%) and open incidents.</p>
-          </div>
+          </TiltCard>
         </div>
       </motion.section>
 

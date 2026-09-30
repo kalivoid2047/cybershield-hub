@@ -5,6 +5,7 @@ import clsx from "clsx";
 import PageHeader from "../../components/common/PageHeader.jsx";
 import Button from "../../components/common/Button.jsx";
 import Card from "../../components/common/Card.jsx";
+import TiltCard from "../../components/common/TiltCard.jsx";
 import EmptyState from "../../components/common/EmptyState.jsx";
 import { SearchInput, Select } from "../../components/common/Field.jsx";
 import LoadError from "../../components/common/LoadError.jsx";
@@ -131,9 +132,10 @@ export default function TrainingPage() {
             const done = lessonStatus(lesson) === "completed";
             return (
               <li key={lesson.id}>
-                <Link
+                <TiltCard
+                  as={Link}
                   to={`/training/${lesson.slug}`}
-                  className="group glass-panel focus-ring flex h-full flex-col rounded-lg p-5 transition hover:-translate-y-1 hover:border-cyanx/30 hover:shadow-glow motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                  className="group glass-panel focus-ring flex h-full flex-col rounded-2xl p-5 hover:border-cyanx/30"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -157,7 +159,7 @@ export default function TrainingPage() {
                     </div>
                     <ProgressBar value={lesson.progress_percent} />
                   </div>
-                </Link>
+                </TiltCard>
               </li>
             );
           })}

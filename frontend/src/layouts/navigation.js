@@ -61,6 +61,7 @@ const sections = [
   ["/admin/users", "Users"],
   ["/admin/quizzes", "Quiz settings"],
   ["/admin/audit", "Audit log"],
+  ["/account", "Account"],
 ];
 
 export function sectionFor(pathname) {

@@ -153,7 +153,7 @@ export default function IncidentTrackerPage() {
                       <p className="mt-1 text-xs text-slate-400">{incident.affected_system}</p>
                     </td>
                     <td className="py-4 pr-3"><StatusBadge value={incident.severity} /></td>
-                    <td className="py-4 pr-3"><StatusBadge value={incident.status} /></td>
+                    <td className="py-4 pr-3"><StatusBadge value={incident.is_draft ? "draft" : incident.status} /></td>
                     <td className="py-4 pr-3 text-slate-300">{incident.assigned_to?.email || "Unassigned"}</td>
                     <td className="py-4 text-slate-400">{formatDate(incident.occurred_at)}</td>
                   </tr>
@@ -172,7 +172,7 @@ export default function IncidentTrackerPage() {
                   </div>
                   <p className="mt-1 font-mono text-xs text-cyanx">{incident.reference_number}</p>
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                    <StatusBadge value={incident.status} />
+                    <StatusBadge value={incident.is_draft ? "draft" : incident.status} />
                     <span>{formatDate(incident.occurred_at)}</span>
                   </div>
                   <p className="mt-2 text-xs text-slate-400">{incident.assigned_to?.email || "Unassigned"}</p>

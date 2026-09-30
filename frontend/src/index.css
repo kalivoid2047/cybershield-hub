@@ -9,6 +9,10 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  --glass-fill: linear-gradient(145deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.028));
+  --glass-fill-strong: linear-gradient(150deg, rgba(20, 34, 58, 0.78), rgba(10, 19, 34, 0.66));
+  --glass-border: rgba(160, 205, 255, 0.16);
 }
 
 * {
@@ -20,9 +24,10 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background:
-    radial-gradient(circle at 12% 16%, rgba(45, 212, 255, 0.14), transparent 26%),
-    radial-gradient(circle at 84% 6%, rgba(46, 229, 157, 0.12), transparent 24%),
-    linear-gradient(135deg, #050914 0%, #08111e 46%, #091427 100%);
+    radial-gradient(circle at 12% 16%, rgba(45, 212, 255, 0.1), transparent 30%),
+    radial-gradient(circle at 86% 6%, rgba(139, 123, 255, 0.1), transparent 28%),
+    linear-gradient(135deg, #040812 0%, #07101d 46%, #0a1226 100%);
+  background-attachment: fixed;
   color: #e5f6ff;
 }
 
@@ -52,23 +57,229 @@ select {
   background: rgba(255, 255, 255, 0.04);
 }
 
+@layer base {
+  /* A bare `grid` sizes its single column to its content, so long text pushes the
+     layout wider than the screen on phones. Explicit grid-cols-* utilities still win. */
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@layer components {
+/* ------------------------------------------------------------------ */
+/* Glass surfaces                                                      */
+/* ------------------------------------------------------------------ */
+
 .glass-panel {
-  border: 1px solid rgba(148, 200, 255, 0.14);
-  background: linear-gradient(145deg, rgba(10, 19, 34, 0.9), rgba(13, 27, 47, 0.72));
-  backdrop-filter: blur(18px);
-  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.28);
+  position: relative;
+  border: 1px solid var(--glass-border);
+  /* Specular sheen along the top edge, like light catching the glass. */
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent 34%), var(--glass-fill);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  backdrop-filter: blur(16px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.03),
+    0 18px 48px rgba(0, 0, 0, 0.36);
+}
+
+/* Heavier, more opaque glass for chrome that floats above content. */
+.glass-strong {
+  position: relative;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-fill-strong);
+  -webkit-backdrop-filter: blur(26px) saturate(170%);
+  backdrop-filter: blur(26px) saturate(170%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 24px 70px rgba(0, 0, 0, 0.5);
+}
+
+.glass-tile {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ------------------------------------------------------------------ */
+/* 3D tilt card                                                        */
+/* ------------------------------------------------------------------ */
+
+.tilt-card {
+  transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s;
+  will-change: transform;
+}
+
+.tilt-card[data-tilting="true"] {
+  transition: transform 0.08s linear, box-shadow 0.3s;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 30px 60px rgba(0, 0, 0, 0.5),
+    0 0 40px rgba(45, 212, 255, 0.1);
+}
+
+/* Moving glare that follows the pointer. */
+.tilt-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  background: radial-gradient(420px circle at var(--gx, 50%) var(--gy, 50%), rgba(255, 255, 255, 0.13), transparent 45%);
+}
+
+.tilt-card[data-tilting="true"]::after {
+  opacity: 1;
+}
+
+/* Inner elements drift against the tilt for a sense of depth. */
+.parallax {
+  transform: translate3d(calc(var(--ry, 0deg) * -0.9), calc(var(--rx, 0deg) * 0.9), 0);
+  transition: transform 0.2s ease-out;
+}
+
+/* ------------------------------------------------------------------ */
+/* Scene background                                                    */
+/* ------------------------------------------------------------------ */
+
+.scene {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.scene-orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(70px);
+  opacity: 0.5;
+  will-change: transform;
+}
+
+.scene-floor {
+  position: absolute;
+  left: -30%;
+  right: -30%;
+  bottom: -8%;
+  height: 62%;
+  perspective: 520px;
+  mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent 88%);
+  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent 88%);
+}
+
+.scene-floor > div {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 100%;
+  transform: rotateX(68deg);
+  background-image:
+    linear-gradient(rgba(45, 212, 255, 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(45, 212, 255, 0.22) 1px, transparent 1px);
+  background-size: 48px 48px;
 }
 
 .grid-floor {
   background-image:
-    linear-gradient(rgba(45, 212, 255, .065) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(45, 212, 255, .065) 1px, transparent 1px);
+    linear-gradient(rgba(45, 212, 255, 0.065) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(45, 212, 255, 0.065) 1px, transparent 1px);
   background-size: 36px 36px;
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, .95), transparent 84%);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.95), transparent 84%);
 }
 
+/* ------------------------------------------------------------------ */
+/* 3D shield                                                           */
+/* ------------------------------------------------------------------ */
+
+.shield-scene {
+  position: relative;
+  width: var(--s, 220px);
+  height: var(--s, 220px);
+  perspective: 900px;
+}
+
+.shield-stage {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.shield-body {
+  position: absolute;
+  inset: 14% 20%;
+  transform-style: preserve-3d;
+  animation: sway 9s ease-in-out infinite;
+  filter: drop-shadow(0 18px 30px rgba(45, 212, 255, 0.35));
+}
+
+.shield-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.shield-ring {
+  position: absolute;
+  inset: 4%;
+  border-radius: 999px;
+  transform-style: preserve-3d;
+  animation: ring-spin 14s linear infinite;
+}
+
+.shield-orbit {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: orbit 16s linear infinite;
+}
+
+.cube {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--c, 22px);
+  height: var(--c, 22px);
+  margin: calc(var(--c, 22px) / -2) 0 0 calc(var(--c, 22px) / -2);
+  transform-style: preserve-3d;
+  animation: cube-spin 11s linear infinite;
+}
+
+.cube > i {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: linear-gradient(135deg, rgba(45, 212, 255, 0.28), rgba(139, 123, 255, 0.16));
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.18);
+}
+
+.cube > i:nth-child(1) { transform: translateZ(calc(var(--c, 22px) / 2)); }
+.cube > i:nth-child(2) { transform: rotateY(180deg) translateZ(calc(var(--c, 22px) / 2)); }
+.cube > i:nth-child(3) { transform: rotateY(90deg) translateZ(calc(var(--c, 22px) / 2)); }
+.cube > i:nth-child(4) { transform: rotateY(-90deg) translateZ(calc(var(--c, 22px) / 2)); }
+.cube > i:nth-child(5) { transform: rotateX(90deg) translateZ(calc(var(--c, 22px) / 2)); }
+.cube > i:nth-child(6) { transform: rotateX(-90deg) translateZ(calc(var(--c, 22px) / 2)); }
+
+}
+
+/* ------------------------------------------------------------------ */
+/* Utilities                                                           */
+/* ------------------------------------------------------------------ */
+
 .focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-cyanx/70 focus:ring-offset-2 focus:ring-offset-void;
+  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanx/70 focus-visible:ring-offset-2 focus-visible:ring-offset-void;
+}
+
+.text-gradient {
+  background: linear-gradient(120deg, #ffffff 10%, #7fe3ff 55%, #9d90ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 /* Native dropdown lists ignore the field background in some browsers and render white. */
@@ -78,7 +289,7 @@ select optgroup {
   color: #e5f6ff;
 }
 
-/* Route changes move focus to <main>; it doesn't need a visible ring. */
+/* Route changes move focus to <main>/<h1>; they don't need a visible ring. */
 main:focus,
 h1:focus {
   outline: none;
@@ -101,6 +312,14 @@ h1:focus {
   top: 1rem;
 }
 
+/* Fallback for browsers without backdrop-filter: keep panels readable. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-panel,
+  .glass-strong {
+    background: rgba(12, 22, 40, 0.94);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -109,5 +328,10 @@ h1:focus {
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .tilt-card,
+  .parallax {
+    transform: none !important;
   }
 }

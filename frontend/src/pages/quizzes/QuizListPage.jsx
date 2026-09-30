@@ -30,7 +30,7 @@ export default function QuizListPage() {
       ) : (
       <div className="grid gap-4 lg:grid-cols-2">
         {quizzes.map((quiz) => (
-          <Card key={quiz.id} className="flex flex-col">
+          <Card key={quiz.id} tilt className="flex flex-col">
             <div className="flex items-start gap-4">
               <div className="rounded-md border border-cyanx/20 bg-cyanx/10 p-3 text-cyanx">
                 <BrainCircuit className="h-6 w-6" />

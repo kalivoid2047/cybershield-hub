@@ -3,10 +3,10 @@ import clsx from "clsx";
 import { Eye, EyeOff, Lock, Search } from "lucide-react";
 
 const control =
-  "focus-ring min-h-11 w-full rounded-md border bg-white/7 text-white placeholder:text-slate-400 transition disabled:cursor-not-allowed disabled:opacity-60";
+  "focus-ring min-h-11 w-full rounded-xl border bg-black/25 text-white placeholder:text-slate-400 shadow-[inset_0_2px_6px_rgba(0,0,0,.35)] backdrop-blur transition hover:border-white/25 focus:border-cyanx/60 focus:shadow-[inset_0_2px_6px_rgba(0,0,0,.35),0_0_0_3px_rgba(45,212,255,.15)] disabled:cursor-not-allowed disabled:opacity-60";
 
 function borderClass(error) {
-  return error ? "border-danger/60" : "border-white/10";
+  return error ? "border-danger/60" : "border-white/12";
 }
 
 // Label + control + hint/error wiring shared by Input, Select and Textarea so

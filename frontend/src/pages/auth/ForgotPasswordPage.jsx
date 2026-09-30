@@ -10,6 +10,7 @@ import { errorMessage } from "../../utils/errors.js";
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [debugToken, setDebugToken] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -18,7 +19,9 @@ export default function ForgotPasswordPage() {
     setError("");
     setSubmitting(true);
     try {
-      await authService.resetPassword(email);
+      const response = await authService.resetPassword(email);
+      // Only present when the API runs in DEBUG (no mail server).
+      setDebugToken(response?.debug_password_reset_token || "");
       setSent(true);
     } catch (err) {
       setError(errorMessage(err, "We couldn't send the reset link. Please try again."));
@@ -35,8 +38,8 @@ export default function ForgotPasswordPage() {
         {sent && (
           <Alert tone="success">
             If the account exists, reset instructions were sent.{" "}
-            <Link className="font-semibold underline" to="/reset-password">
-              Enter reset token
+            <Link className="font-semibold underline" to={debugToken ? `/reset-password?token=${debugToken}` : "/reset-password"}>
+              {debugToken ? "Continue to reset (development shortcut)" : "Enter reset token"}
             </Link>
           </Alert>
         )}

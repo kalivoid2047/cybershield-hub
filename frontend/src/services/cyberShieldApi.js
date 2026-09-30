@@ -46,6 +46,11 @@ export const authService = {
   async verifyEmail(token) {
     return withFallback(() => apiClient.post("/auth/verify-email/", { token }), {});
   },
+  // Account self-service. No demo fallback: pretending to save a password would be worse than failing.
+  updateProfile: (patch) => apiClient.patch("/auth/me/", patch).then(unwrap),
+  changePassword: (payload) => apiClient.post("/auth/change-password/", payload).then(unwrap),
+  sessions: () => apiClient.get("/auth/sessions/", { params: { page_size: 50 } }).then(unwrap),
+  revokeSession: (id) => apiClient.post(`/auth/sessions/${id}/revoke/`).then(unwrap),
 };
 
 export const dashboardService = {
@@ -152,6 +157,8 @@ export const incidentService = {
           return acc;
         }, {}),
     ),
+  // Turns a saved draft into a submitted report.
+  submit: (id) => apiClient.post(`/incidents/incidents/${id}/submit/`).then(unwrap),
   create: (payload) =>
     withFallback(
       () => {
@@ -178,6 +185,8 @@ export const alertService = {
   notifications: () => withFallback(() => apiClient.get("/alerts/notifications/"), () => alerts.map((alert) => ({ id: alert.id, alert, is_read: false }))),
   markRead: (id) => withFallback(() => apiClient.post(`/alerts/notifications/${id}/read/`), {}),
   markAllRead: () => withFallback(() => apiClient.post("/alerts/notifications/read_all/"), {}),
+  // Admin-only: publishes an alert and fans it out as a notification to the audience.
+  create: (payload) => apiClient.post("/alerts/alerts/", payload).then(unwrap),
 };
 
 export const analyticsService = {
@@ -198,8 +207,12 @@ export const adminService = {
   // No demo fallback: showing fake quizzes here would let someone "save" settings that go nowhere.
   quizzes: () => apiClient.get("/quizzes/quizzes/", { params: { page_size: 100 } }).then(unwrap),
   updateQuiz: (id, patch) => apiClient.patch(`/quizzes/quizzes/${id}/`, patch).then(unwrap),
-  users: () => withFallback(() => apiClient.get("/auth/users/"), users),
-  auditLogs: () => withFallback(() => apiClient.get("/audit/logs/"), auditLogs),
+  users: () => withFallback(() => apiClient.get("/auth/users/", { params: { page_size: 100 } }), users),
+  roles: () => apiClient.get("/auth/roles/", { params: { page_size: 50 } }).then(unwrap),
+  updateUser: (id, patch) => apiClient.patch(`/auth/users/${id}/`, patch).then(unwrap),
+  setUserActive: (id, active) => apiClient.post(`/auth/users/${id}/${active ? "activate" : "deactivate"}/`).then(unwrap),
+  resetFailedLogins: (id) => apiClient.post(`/auth/users/${id}/reset_failed_logins/`).then(unwrap),
+  auditLogs: () => withFallback(() => apiClient.get("/audit/logs/", { params: { page_size: 100 } }), auditLogs),
   async exportAuditLogs() {
     const response = await apiClient.get("/audit/logs/export/", { responseType: "blob" });
     const url = URL.createObjectURL(response.data);
