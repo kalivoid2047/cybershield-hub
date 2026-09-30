@@ -24,6 +24,10 @@ const AuditLogPage = lazy(() => import("./pages/admin/AuditLogPage.jsx"));
 const QuizSettingsPage = lazy(() => import("./pages/admin/QuizSettingsPage.jsx"));
 const UsersAdminPage = lazy(() => import("./pages/admin/UsersAdminPage.jsx"));
 const IncidentDetailPage = lazy(() => import("./pages/incidents/IncidentDetailPage.jsx"));
+const ContentAdminPage = lazy(() => import("./pages/admin/content/ContentAdminPage.jsx"));
+const LessonEditorPage = lazy(() => import("./pages/admin/content/LessonEditorPage.jsx"));
+const QuizEditorPage = lazy(() => import("./pages/admin/content/QuizEditorPage.jsx"));
+const SimulationEditorPage = lazy(() => import("./pages/admin/content/SimulationEditorPage.jsx"));
 const AccountPage = lazy(() => import("./pages/account/AccountPage.jsx"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage.jsx"));
 
@@ -90,6 +94,17 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        {[
+          ["/admin/content", <ContentAdminPage key="content" />],
+          ["/admin/content/lessons/new", <LessonEditorPage key="lesson-new" />],
+          ["/admin/content/lessons/:slug", <LessonEditorPage key="lesson-edit" />],
+          ["/admin/content/quizzes/new", <QuizEditorPage key="quiz-new" />],
+          ["/admin/content/quizzes/:id", <QuizEditorPage key="quiz-edit" />],
+          ["/admin/content/phishing/new", <SimulationEditorPage key="sim-new" />],
+          ["/admin/content/phishing/:id", <SimulationEditorPage key="sim-edit" />],
+        ].map(([path, element]) => (
+          <Route key={path} path={path} element={<ProtectedRoute roles={["system_admin"]}>{element}</ProtectedRoute>} />
+        ))}
         <Route
           path="/admin/quizzes"
           element={

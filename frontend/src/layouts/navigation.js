@@ -6,6 +6,7 @@ import {
   BrainCircuit,
   ClipboardList,
   FileWarning,
+  LibraryBig,
   LayoutDashboard,
   ShieldCheck,
   SlidersHorizontal,
@@ -42,6 +43,7 @@ export const navGroups = [
     items: [
       { label: "Analytics", to: "/analytics", icon: BarChart3, roles: STAFF },
       { label: "Audit log", to: "/admin/audit", icon: ShieldCheck, roles: STAFF },
+      { label: "Content", to: "/admin/content", icon: LibraryBig, roles: ["system_admin"] },
       { label: "Users", to: "/admin/users", icon: Users, roles: ["system_admin"] },
       { label: "Quiz settings", to: "/admin/quizzes", icon: SlidersHorizontal, roles: ["system_admin"] },
     ],
@@ -58,6 +60,7 @@ const sections = [
   ["/soc", "SOC queue"],
   ["/analytics", "Analytics"],
   ["/alerts", "Alerts"],
+  ["/admin/content", "Content"],
   ["/admin/users", "Users"],
   ["/admin/quizzes", "Quiz settings"],
   ["/admin/audit", "Audit log"],

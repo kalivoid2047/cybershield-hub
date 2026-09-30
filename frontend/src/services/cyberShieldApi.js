@@ -58,7 +58,7 @@ export const dashboardService = {
 };
 
 export const trainingService = {
-  lessons: () => withFallback(() => apiClient.get("/training/lessons/"), lessons),
+  lessons: () => withFallback(() => apiClient.get("/training/lessons/", { params: { page_size: 100 } }), lessons),
   lesson: (slug) => withFallback(() => apiClient.get(`/training/lessons/${slug}/`), lessons.find((item) => item.slug === slug) || lessons[0]),
   updateProgress: (slug, progressPercent) =>
     withFallback(
@@ -112,7 +112,7 @@ export const quizService = {
 };
 
 export const phishingService = {
-  simulations: () => withFallback(() => apiClient.get("/phishing/simulations/"), phishingSimulations),
+  simulations: () => withFallback(() => apiClient.get("/phishing/simulations/", { params: { page_size: 100 } }), phishingSimulations),
   submit: (id, payload) =>
     withFallback(
       () => apiClient.post(`/phishing/simulations/${id}/submit/`, payload),
@@ -224,4 +224,30 @@ export const adminService = {
     link.remove();
     URL.revokeObjectURL(url);
   },
+};
+
+// Content authoring (system administrators). No demo fallback: a create or edit that
+// only "succeeds" locally would silently lose the author's work.
+export const contentService = {
+  categories: () => apiClient.get("/training/categories/", { params: { page_size: 100 } }).then(unwrap),
+  createCategory: (payload) => apiClient.post("/training/categories/", payload).then(unwrap),
+
+  lessons: () => apiClient.get("/training/lessons/", { params: { page_size: 100 } }).then(unwrap),
+  lesson: (slug) => apiClient.get(`/training/lessons/${slug}/`).then(unwrap),
+  createLesson: (payload) => apiClient.post("/training/lessons/", payload).then(unwrap),
+  updateLesson: (slug, patch) => apiClient.patch(`/training/lessons/${slug}/`, patch).then(unwrap),
+  deleteLesson: (slug) => apiClient.delete(`/training/lessons/${slug}/`),
+
+  quizzes: () => apiClient.get("/quizzes/quizzes/", { params: { page_size: 100 } }).then(unwrap),
+  // Includes which answers are correct; learner endpoints deliberately hide that.
+  quiz: (id) => apiClient.get(`/quizzes/quizzes/${id}/editor/`).then(unwrap),
+  createQuiz: (payload) => apiClient.post("/quizzes/quizzes/", payload).then(unwrap),
+  updateQuiz: (id, patch) => apiClient.patch(`/quizzes/quizzes/${id}/`, patch).then(unwrap),
+  deleteQuiz: (id) => apiClient.delete(`/quizzes/quizzes/${id}/`),
+
+  simulations: () => apiClient.get("/phishing/simulations/", { params: { page_size: 100 } }).then(unwrap),
+  simulation: (id) => apiClient.get(`/phishing/simulations/${id}/`).then(unwrap),
+  createSimulation: (payload) => apiClient.post("/phishing/simulations/", payload).then(unwrap),
+  updateSimulation: (id, patch) => apiClient.patch(`/phishing/simulations/${id}/`, patch).then(unwrap),
+  deleteSimulation: (id) => apiClient.delete(`/phishing/simulations/${id}/`),
 };

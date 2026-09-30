@@ -93,7 +93,8 @@ export const Textarea = forwardRef(function Textarea({ label, hint, error, hideL
         id={id}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(id, hint, error)}
-        className={clsx(control, borderClass(error), "min-h-32 resize-y p-3", className)}
+        rows={props.rows ?? 5}
+        className={clsx(control, borderClass(error), "resize-y p-3", className)}
         {...props}
       />
     </Shell>
