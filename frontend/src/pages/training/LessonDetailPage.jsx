@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Bookmark, CheckCircle2, Clock, PlayCircle } from "lucide-react";
 import Button from "../../components/common/Button.jsx";
 import Card from "../../components/common/Card.jsx";
+import MarkdownContent from "../../components/common/MarkdownContent.jsx";
 import PageHeader from "../../components/common/PageHeader.jsx";
 import ProgressBar from "../../components/common/ProgressBar.jsx";
 import StatusBadge from "../../components/common/StatusBadge.jsx";
@@ -84,15 +85,7 @@ export default function LessonDetailPage() {
             <div className="mb-4 flex h-48 items-center justify-center rounded-md border border-cyanx/15 bg-cyanx/8">
               <PlayCircle className="h-14 w-14 text-cyanx" />
             </div>
-            <div className="prose prose-invert max-w-none">
-              <p className="text-base leading-8 text-slate-300">{lesson.content}</p>
-              <h3 className="mt-6 text-lg font-semibold text-white">Operational checklist</h3>
-              <ul className="mt-3 space-y-2 text-slate-300">
-                <li>Validate sender identity and domain alignment.</li>
-                <li>Inspect links before credentials, payments, or files are shared.</li>
-                <li>Use the incident channel for anything suspicious.</li>
-              </ul>
-            </div>
+            <MarkdownContent source={lesson.content} />
           </div>
         </Card>
         <aside className="space-y-4">

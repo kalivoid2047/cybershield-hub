@@ -5,6 +5,7 @@ from apps.alerts.models import Notification, SecurityAlert
 from apps.incidents.models import Incident, IncidentCategory, IncidentUpdate
 from apps.phishing.models import PhishingSimulation
 from apps.quizzes.models import AnswerOption, Question, Quiz
+from apps.training.content import LESSONS, QUIZZES
 from apps.training.models import Lesson, LessonCategory
 from apps.users.models import Role, User
 
@@ -105,43 +106,17 @@ class Command(BaseCommand):
             )
             categories[slug] = category
 
-        lesson_specs = [
-            (
-                "phishing",
-                "Phishing Red Flags in 10 Minutes",
-                "Learn the core signals that separate routine email from credential theft.",
-                "Check sender domains, urgency cues, mismatched URLs, attachment context, and requests for secrets. When in doubt, report instead of replying.",
-            ),
-            (
-                "password-security",
-                "Password Managers and MFA",
-                "Create unique credentials and protect critical accounts with multi-factor authentication.",
-                "Use long generated passwords, never reuse credentials, and prefer phishing-resistant MFA where available.",
-            ),
-            (
-                "data-privacy",
-                "Handling Sensitive Data",
-                "Classify, store, and share sensitive information with practical guardrails.",
-                "Validate the recipient, minimize data exposure, encrypt approved transfers, and record exceptions.",
-            ),
-            (
-                "malware",
-                "Malware Intake Basics",
-                "Understand risky attachments, macros, and suspicious downloads.",
-                "Do not open unexpected attachments. Preserve evidence, isolate the endpoint if needed, and notify security.",
-            ),
-        ]
-        for slug, title, summary, content in lesson_specs:
+        for spec in LESSONS:
             Lesson.objects.update_or_create(
-                slug=title.lower().replace(" ", "-").replace("&", "and"),
+                slug=spec["slug"],
                 defaults={
-                    "category": categories[slug],
-                    "title": title,
-                    "summary": summary,
-                    "content": content,
-                    "difficulty": Lesson.BEGINNER,
-                    "estimated_minutes": 8,
-                    "tags": [slug, "awareness"],
+                    "category": categories[spec["category"]],
+                    "title": spec["title"],
+                    "summary": spec["summary"],
+                    "content": spec["content"],
+                    "difficulty": spec["difficulty"],
+                    "estimated_minutes": spec["minutes"],
+                    "tags": spec["tags"],
                     "is_published": True,
                     "created_by": admin,
                 },
@@ -149,46 +124,25 @@ class Command(BaseCommand):
         return categories
 
     def seed_quizzes(self, categories, admin):
-        quiz, _ = Quiz.objects.update_or_create(
-            slug="phishing-foundations",
-            defaults={
-                "title": "Phishing Foundations Assessment",
-                "description": "A quick check of phishing detection fundamentals.",
-                "category": categories["phishing"],
-                "time_limit_minutes": 8,
-                "pass_score": 75,
-                "is_active": True,
-                "created_by": admin,
-            },
-        )
-        quiz.questions.all().delete()
-        questions = [
-            (
-                "Which signal is most suspicious in an email asking you to reset your password?",
-                "URL Inspection",
-                "A mismatched domain is a strong phishing indicator.",
-                ["A verified internal sender", "A link to a lookalike domain", "A normal signature", "A recent ticket number"],
-                1,
-            ),
-            (
-                "What should you do with an unexpected attachment from an external sender?",
-                "Malware Prevention",
-                "Preserve the message and report it before opening the file.",
-                ["Open it quickly", "Forward it to coworkers", "Report it for review", "Disable antivirus first"],
-                2,
-            ),
-            (
-                "A message demands urgent gift card purchases from an executive. What is the likely tactic?",
-                "Social Engineering",
-                "Urgency plus authority pressure is a common social engineering pattern.",
-                ["Business email compromise", "Routine finance approval", "Patch management", "Data backup"],
-                0,
-            ),
-        ]
-        for index, (prompt, competency, explanation, answers, correct_index) in enumerate(questions, start=1):
-            question = Question.objects.create(quiz=quiz, prompt=prompt, competency=competency, explanation=explanation, order=index)
-            for answer_index, text in enumerate(answers):
-                AnswerOption.objects.create(question=question, text=text, is_correct=answer_index == correct_index, order=answer_index)
+        for spec in QUIZZES:
+            quiz, _ = Quiz.objects.update_or_create(
+                slug=spec["slug"],
+                defaults={
+                    "title": spec["title"],
+                    "description": spec["description"],
+                    "category": categories[spec["category"]],
+                    "lesson": Lesson.objects.filter(slug=spec["lesson"]).first(),
+                    "time_limit_minutes": spec["time_limit_minutes"],
+                    "pass_score": spec["pass_score"],
+                    "is_active": True,
+                    "created_by": admin,
+                },
+            )
+            quiz.questions.all().delete()
+            for index, (prompt, competency, explanation, answers, correct_index) in enumerate(spec["questions"], start=1):
+                question = Question.objects.create(quiz=quiz, prompt=prompt, competency=competency, explanation=explanation, order=index)
+                for answer_index, text in enumerate(answers):
+                    AnswerOption.objects.create(question=question, text=text, is_correct=answer_index == correct_index, order=answer_index)
 
     def seed_phishing(self, admin):
         simulations = [
