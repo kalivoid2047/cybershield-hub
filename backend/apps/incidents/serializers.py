@@ -1,6 +1,8 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils import timezone
 from rest_framework import serializers
 
+from apps.common.validators import validate_evidence_upload
 from apps.incidents.models import Incident, IncidentAssignment, IncidentAttachment, IncidentCategory, IncidentUpdate
 from apps.users.models import Role
 from apps.users.serializers import UserSerializer
@@ -99,6 +101,16 @@ class IncidentCreateUpdateSerializer(serializers.ModelSerializer):
             "attachments",
         ]
         read_only_fields = ["id", "reference_number"]
+
+    def validate_attachments(self, files):
+        # The model-level validators only run on full_clean(), which objects.create() skips,
+        # so the type and size rules must be applied here.
+        for file_obj in files:
+            try:
+                validate_evidence_upload(file_obj)
+            except DjangoValidationError as exc:
+                raise serializers.ValidationError(f"{file_obj.name}: {' '.join(exc.messages)}")
+        return files
 
     def create(self, validated_data):
         files = validated_data.pop("attachments", [])
