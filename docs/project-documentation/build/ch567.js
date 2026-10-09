@@ -192,7 +192,7 @@ await build("Chapter_5_Coding_and_Testing.docx", 5, "Coding and Testing", [
   P("**Defect found by this testing.** The first live run showed that the incident form accepted a .exe file. The file rules were defined on the database model, but Django does not run model rules when a record is created in code. The rules are now applied in the serializer (`validate_attachments`), and three new tests (T17, T18 and a test for an allowed file) prevent this from returning."),
   H2("5.6.5 Mobile app tests"),
   P("The Flutter app was tested in two ways."),
-  B("**Screen flow tests** (`test/app_flow_test.dart` and `test/widget_test.dart`) run the app screens in a test window with a fake server. **8 tests passed and 1 failed.** The flows that passed are sign-in, login errors, lesson reading, quiz, phishing lab, incident list and report form, and the model test. The one failure is the alerts and account test. The screen shows all the right content, but the test fails because a row on one of those screens is 63 pixels too wide for the small test window (a Flutter layout overflow warning). This is a known issue. It is listed for repair in section 7.6."),
+  B("**Screen flow tests** (`test/app_flow_test.dart` and `test/widget_test.dart`) run the app screens in a test window with a fake server. **All 9 tests passed.** They cover sign-in, login errors, lessons, quiz, phishing lab, incident list and report form, alerts, account sign-out and the model test. An earlier run of the alerts test failed because the alert card footer (type label and time) was 63 pixels too wide for a 400-pixel phone screen. The footer now wraps onto a second line when needed, and the test passes."),
   B("**Live smoke test** (`test/live_smoke_test.dart`) runs the real API client against a running server. **All 10 tests passed.** They cover register, login and profile, lessons, quiz start and submit, phishing submit, incident report and read, notifications, password change, token refresh after expiry and logout."),
   H2("5.6.6 Manual and user acceptance test script"),
   P("This script is for the web and mobile apps. It uses the demo accounts made by `python manage.py seed_demo`. The people who run the test write the outcome in the last column."),
@@ -212,7 +212,7 @@ await build("Chapter_5_Coding_and_Testing.docx", 5, "Coding and Testing", [
   H2("5.6.7 Defects fixed during development"),
   P("The suite contains tests for subtle problems that testing exposed. Attempt counts must not be inflated by database joins. An open attempt created before a limit change must not be submitted past the limit. Refresh rotation must keep the stored session pointed at the new token. Unanswered questions must still show the correct answer in results. Attempt detail must not run one database query for each answer. Evidence files must be checked for type and size before the incident is created."),
   H2("5.6.8 Conclusion on testing"),
-  P(`All ${TESTS.total} automatic tests passed, and all ${live.length} live flow checks passed. Together they give strong evidence that the server meets requirements FR1 to FR22. On the mobile app, 18 of 19 tests passed (8 of 9 screen tests and 10 of 10 live tests), and the one failing test shows a layout problem, not a wrong result. The user acceptance script in section 5.6.6 completes the check of the screens on the web and mobile apps.`),
+  P(`All ${TESTS.total} automatic tests passed, and all ${live.length} live flow checks passed. Together they give strong evidence that the server meets requirements FR1 to FR22. On the mobile app, all 19 tests passed (9 screen tests and 10 live tests). The user acceptance script in section 5.6.6 completes the check of the screens on the web and mobile apps.`),
 ]);
 
 // ======================= CHAPTER 6 =======================
@@ -400,7 +400,6 @@ await build("Chapter_7_Conclusion.docx", 7, "Conclusion", [
   B("There is no single sign-on and no link to SIEM tools."),
   B("The mobile app covers learners and reporters. Officer and administrator screens are on the web only."),
   B("The web and mobile apps have fewer automatic tests than the server, so part of the screen testing depends on the manual script."),
-  B("One mobile screen test fails because of a small layout overflow (63 pixels) in the test window. The content is correct, but the layout needs a fix."),
   H1("7.5 Lessons Learned"),
   B("Keeping business rules in a service layer let both apps share them and made them easy to test."),
   B("Testing alongside development found real defects early. The final live test also found that uploaded files were not being checked, and this was fixed."),
@@ -419,7 +418,6 @@ await build("Chapter_7_Conclusion.docx", 7, "Conclusion", [
     ["Better analytics: trend forecasts, risk scores for each department, scheduled PDF reports", "Better decisions"],
     ["Response playbooks and time limits (SLA timers) for incidents", "Steady and timely response"],
     ["Docker deployment and automatic backups", "Easier operation"],
-    ["Fix the layout overflow found by the mobile alerts and account test", "All mobile tests pass"],
   ], [5200, 3826], "Future plans"),
   H1("7.7 Final Remarks"),
   P("CyberShield Hub shows that one developer can build a secure, measurable and easy-to-use security awareness and incident response platform with open-source tools. By joining continuous learning with an accountable response process, it helps an organisation move from reacting to incidents to preventing them."),
