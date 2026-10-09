@@ -1,0 +1,170 @@
+[
+  {
+    "id": "M1a",
+    "step": "Register a new account",
+    "expected": "Account created (201)",
+    "result": "Pass",
+    "note": "status 201"
+  },
+  {
+    "id": "M1b",
+    "step": "Log in with the new account",
+    "expected": "Tokens returned; role is normal user",
+    "result": "Pass",
+    "note": "role normal_user"
+  },
+  {
+    "id": "M2a",
+    "step": "List lessons",
+    "expected": "Lessons returned",
+    "result": "Pass",
+    "note": "17 lessons"
+  },
+  {
+    "id": "M2b",
+    "step": "Save lesson progress",
+    "expected": "Progress saved",
+    "result": "Pass",
+    "note": "status 200"
+  },
+  {
+    "id": "M2c",
+    "step": "Bookmark a lesson",
+    "expected": "Bookmark created",
+    "result": "Pass",
+    "note": "status 200"
+  },
+  {
+    "id": "M2d",
+    "step": "Progress persists after a new request",
+    "expected": "Saved progress is returned",
+    "result": "Pass",
+    "note": "1 records"
+  },
+  {
+    "id": "M3",
+    "step": "Take a quiz and submit",
+    "expected": "Score, pass/fail and recommendations returned",
+    "result": "Pass",
+    "note": "score 33.33, passed false"
+  },
+  {
+    "id": "M4",
+    "step": "Classify a phishing message",
+    "expected": "Score and feedback returned",
+    "result": "Pass",
+    "note": "score 90, correct true"
+  },
+  {
+    "id": "M5a",
+    "step": "Report an incident with a .pdf file",
+    "expected": "Created with reference number",
+    "result": "Pass",
+    "note": "INC-20261009-486C07"
+  },
+  {
+    "id": "M5b",
+    "step": "Report an incident with a .exe file",
+    "expected": "Rejected with a message",
+    "result": "Pass",
+    "note": "status 400"
+  },
+  {
+    "id": "M6a",
+    "step": "Officer opens the SOC queue",
+    "expected": "Incidents grouped by status",
+    "result": "Pass",
+    "note": "status 200"
+  },
+  {
+    "id": "M6b",
+    "step": "Officer assigns the incident",
+    "expected": "Assignment saved",
+    "result": "Pass",
+    "note": "status 200"
+  },
+  {
+    "id": "M6c",
+    "step": "Officer changes status to Escalated",
+    "expected": "Timeline entry added",
+    "result": "Pass",
+    "note": "status 200"
+  },
+  {
+    "id": "M6d",
+    "step": "Reporter sees the new status and timeline",
+    "expected": "Status is escalated and timeline has entries",
+    "result": "Pass",
+    "note": "status escalated, 2 updates"
+  },
+  {
+    "id": "M7a",
+    "step": "Administrator publishes an alert",
+    "expected": "Alert created and users notified",
+    "result": "Pass",
+    "note": "notifications 1 -> 2"
+  },
+  {
+    "id": "M7b",
+    "step": "User marks the notification as read",
+    "expected": "Marked as read",
+    "result": "Pass",
+    "note": "status 200"
+  },
+  {
+    "id": "M7c",
+    "step": "Officer tries to publish an alert",
+    "expected": "Refused (403)",
+    "result": "Pass",
+    "note": "status 403"
+  },
+  {
+    "id": "M8a",
+    "step": "Normal user opens the SOC queue",
+    "expected": "Refused (403)",
+    "result": "Pass",
+    "note": "status 403"
+  },
+  {
+    "id": "M8b",
+    "step": "Normal user lists users",
+    "expected": "Refused (403)",
+    "result": "Pass",
+    "note": "status 403"
+  },
+  {
+    "id": "M8c",
+    "step": "Anonymous user lists users",
+    "expected": "Refused (401)",
+    "result": "Pass",
+    "note": "status 401"
+  },
+  {
+    "id": "M9",
+    "step": "Administrator deactivates a user; the user tries to log in",
+    "expected": "Login refused",
+    "result": "Pass",
+    "note": "deactivate 200, login 400"
+  },
+  {
+    "id": "M10a",
+    "step": "Officer opens the audit log",
+    "expected": "Entries for the steps above",
+    "result": "Pass",
+    "note": "20 entries"
+  },
+  {
+    "id": "M10b",
+    "step": "Export the audit log as CSV",
+    "expected": "CSV file returned",
+    "result": "Pass",
+    "note": "27 rows"
+  },
+  {
+    "id": "M12",
+    "step": "Send many wrong-password logins quickly",
+    "expected": "Requests are throttled (429)",
+    "result": "Pass",
+    "note": ""
+  }
+]
