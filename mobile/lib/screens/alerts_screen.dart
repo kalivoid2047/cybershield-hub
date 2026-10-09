@@ -161,10 +161,13 @@ class _AlertCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Row(
+                // Wrap lets the time drop to a second line on narrow screens.
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Pill(_typeLabel(notification.alertType), color: color),
-                    const SizedBox(width: 8),
                     MutedText(timeAgo(notification.createdAt), size: 12),
                   ],
                 ),
