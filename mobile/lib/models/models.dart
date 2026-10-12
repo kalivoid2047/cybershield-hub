@@ -103,6 +103,7 @@ class Lesson {
     required this.progressPercent,
     required this.isBookmarked,
     required this.quizzes,
+    this.quizRequired = false,
   });
 
   factory Lesson.fromJson(Json json) {
@@ -123,6 +124,7 @@ class Lesson {
       quizzes: _maps(json['quizzes'])
           .map((q) => QuizRef(id: _int(q['id']), title: _str(q['title'])))
           .toList(),
+      quizRequired: json['quiz_required'] == true,
     );
   }
 
@@ -140,6 +142,9 @@ class Lesson {
   final bool isBookmarked;
   final List<QuizRef> quizzes;
 
+  /// True until the learner has finished an attempt at one of the lesson's quizzes.
+  final bool quizRequired;
+
   bool get isComplete => progressPercent >= 100;
 
   Lesson copyWith({int? progressPercent, bool? isBookmarked}) => Lesson(
@@ -156,6 +161,7 @@ class Lesson {
     progressPercent: progressPercent ?? this.progressPercent,
     isBookmarked: isBookmarked ?? this.isBookmarked,
     quizzes: quizzes,
+    quizRequired: quizRequired,
   );
 }
 

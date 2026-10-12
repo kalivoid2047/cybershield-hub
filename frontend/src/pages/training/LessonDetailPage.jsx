@@ -93,6 +93,7 @@ export default function LessonDetailPage() {
   }
 
   const done = progress >= 100;
+  const quizBlocked = Boolean(lesson.quiz_required) && !done;
 
   return (
     <div>
@@ -122,8 +123,14 @@ export default function LessonDetailPage() {
             <MarkdownContent source={lesson.content} />
           </article>
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.035] p-4">
-            <p className="text-sm text-slate-300">{done ? "You've completed this lesson." : "Finished reading? Record your progress."}</p>
-            <Button onClick={completeLesson} disabled={saving || done}>
+            <p className="text-sm text-slate-300">
+              {done
+                ? "You've completed this lesson."
+                : quizBlocked
+                  ? "Take the lesson quiz to unlock completion."
+                  : "Finished reading? Record your progress."}
+            </p>
+            <Button onClick={completeLesson} disabled={saving || done || quizBlocked}>
               <CheckCircle2 className="h-4 w-4" />
               {done ? "Completed" : saving ? "Saving..." : "Mark complete"}
             </Button>
@@ -136,7 +143,7 @@ export default function LessonDetailPage() {
               <p className="text-5xl font-bold text-white">{progress}%</p>
               <ProgressBar className="mt-4" value={progress} />
             </div>
-            <Button className="mt-5 w-full" onClick={completeLesson} disabled={saving || done}>
+            <Button className="mt-5 w-full" onClick={completeLesson} disabled={saving || done || quizBlocked}>
               <CheckCircle2 className="h-4 w-4" />
               {done ? "Completed" : saving ? "Saving..." : "Mark complete"}
             </Button>

@@ -37,6 +37,7 @@ class LessonSerializer(serializers.ModelSerializer):
     progress_percent = serializers.SerializerMethodField()
     is_bookmarked = serializers.SerializerMethodField()
     quizzes = serializers.SerializerMethodField()
+    quiz_required = serializers.SerializerMethodField()
 
     class Meta:
         model = Lesson
@@ -58,6 +59,7 @@ class LessonSerializer(serializers.ModelSerializer):
             "progress_percent",
             "is_bookmarked",
             "quizzes",
+            "quiz_required",
             "created_at",
             "updated_at",
         ]
@@ -82,6 +84,16 @@ class LessonSerializer(serializers.ModelSerializer):
         if quizzes is None:
             quizzes = obj.quizzes.filter(is_active=True)
         return [{"id": quiz.id, "title": quiz.title, "slug": quiz.slug} for quiz in quizzes]
+
+    def get_quiz_required(self, obj):
+        """True while the learner still has to finish a quiz attempt before completing the lesson."""
+        user = self.context["request"].user
+        if not user.is_authenticated:
+            return False
+        quizzes = getattr(obj, "active_quizzes", None)
+        if quizzes is not None and not quizzes:
+            return False  # skip the queries for lessons without a quiz
+        return obj.quiz_required_for(user)
 
     def get_progress_percent(self, obj):
         user = self.context["request"].user
@@ -113,6 +125,15 @@ class LessonProgressSerializer(serializers.ModelSerializer):
         if value < 0 or value > 100:
             raise serializers.ValidationError("Progress must be between 0 and 100.")
         return value
+
+    def validate(self, attrs):
+        # Direct create/update through the progress viewset must not bypass the quiz requirement.
+        lesson = attrs.get("lesson") or (self.instance.lesson if self.instance else None)
+        percent = attrs.get("progress_percent", self.instance.progress_percent if self.instance else 0)
+        user = self.context["request"].user
+        if lesson and percent >= 100 and lesson.quiz_required_for(user):
+            raise serializers.ValidationError({"detail": "Take the lesson quiz before marking this lesson complete."})
+        return attrs
 
 
 class LessonBookmarkSerializer(serializers.ModelSerializer):

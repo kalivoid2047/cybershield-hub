@@ -10,6 +10,11 @@ from apps.training.models import Lesson, LessonBookmark, LessonCategory, LessonP
 from apps.training.serializers import LessonBookmarkSerializer, LessonCategorySerializer, LessonProgressSerializer, LessonSerializer
 
 
+def require_quiz_taken(user, lesson):
+    if lesson.quiz_required_for(user):
+        raise ValidationError({"detail": "Take the lesson quiz before marking this lesson complete."})
+
+
 class LessonCategoryViewSet(viewsets.ModelViewSet):
     # Ordered explicitly: an aggregate annotation drops the model's default ordering.
     queryset = LessonCategory.objects.annotate(lesson_count=Count("lessons")).order_by("order", "name", "id")
@@ -76,6 +81,7 @@ class LessonViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated])
     def complete(self, request, slug=None):
         lesson = self.get_object()
+        require_quiz_taken(request.user, lesson)
         progress, _ = LessonProgress.objects.get_or_create(user=request.user, lesson=lesson)
         progress.mark_progress(100)
         return ok(LessonProgressSerializer(progress, context={"request": request}).data, "Lesson completed.")

@@ -76,6 +76,24 @@ class TestLessonProgress:
         assert progress.progress_percent == 100
         assert progress.completed_at is not None
 
+    def test_complete_blocked_until_quiz_attempt_finished(self, user_client, normal_user, published_lesson, quiz):
+        from django.utils import timezone
+
+        from apps.quizzes.models import QuizAttempt
+
+        complete_url = reverse("lessons-complete", args=[published_lesson.slug])
+        progress_url = reverse("lessons-progress", args=[published_lesson.slug])
+
+        assert user_client.post(complete_url).status_code == 400
+        assert user_client.post(progress_url, {"progress_percent": 100}, format="json").status_code == 400
+        assert user_client.post(progress_url, {"progress_percent": 60}, format="json").status_code == 200
+        assert not LessonProgress.objects.get(lesson=published_lesson).completed_at
+
+        QuizAttempt.objects.create(user=normal_user, quiz=quiz, completed_at=timezone.now())
+
+        assert user_client.post(complete_url).status_code == 200
+        assert LessonProgress.objects.get(lesson=published_lesson).completed_at is not None
+
     def test_progress_endpoint_rejects_out_of_range_percentage(self, user_client, published_lesson):
         url = reverse("lessons-progress", args=[published_lesson.slug])
 

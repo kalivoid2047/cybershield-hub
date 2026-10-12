@@ -182,9 +182,13 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   )
                 else
                   FilledButton.icon(
-                    onPressed: _busy ? null : _complete,
+                    onPressed: _busy || lesson.quizRequired ? null : _complete,
                     icon: const Icon(Icons.check),
-                    label: const Text('Mark as complete'),
+                    label: Text(
+                      lesson.quizRequired
+                          ? 'Take the quiz to complete'
+                          : 'Mark as complete',
+                    ),
                   ),
                 if (lesson.quizzes.isNotEmpty) ...[
                   const SizedBox(height: 24),
@@ -193,11 +197,15 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: AppCard(
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => QuizIntroScreen(quizId: quiz.id),
-                          ),
-                        ),
+                        onTap: () async {
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => QuizIntroScreen(quizId: quiz.id),
+                            ),
+                          );
+                          // The attempt may have unlocked completion.
+                          if (mounted) _load();
+                        },
                         child: Row(
                           children: [
                             const Icon(

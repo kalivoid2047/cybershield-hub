@@ -54,6 +54,15 @@ class Lesson(TimeStampedModel):
     def __str__(self):
         return self.title
 
+    def quiz_required_for(self, user):
+        """True if the lesson has an active quiz the user has not yet finished an attempt on."""
+        from apps.quizzes.models import Quiz, QuizAttempt
+
+        quiz_ids = list(Quiz.objects.filter(lesson=self, is_active=True).values_list("id", flat=True))
+        if not quiz_ids:
+            return False
+        return not QuizAttempt.objects.filter(user=user, quiz_id__in=quiz_ids, completed_at__isnull=False).exists()
+
 
 class LessonProgress(TimeStampedModel):
     user = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name="lesson_progress")
