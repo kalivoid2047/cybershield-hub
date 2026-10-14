@@ -6,13 +6,13 @@ from rest_framework.decorators import action
 
 from apps.audit.models import AuditLog
 from apps.audit.serializers import AuditLogSerializer
-from apps.common.permissions import IsCyberOfficer
+from apps.common.permissions import IsSystemAdmin
 
 
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AuditLog.objects.select_related("actor", "actor__role").all()
     serializer_class = AuditLogSerializer
-    permission_classes = [IsCyberOfficer]
+    permission_classes = [IsSystemAdmin]
     filterset_fields = ["action", "resource_type", "actor"]
     search_fields = ["actor__email", "action", "resource_type", "resource_id", "ip_address"]
     ordering_fields = ["created_at", "action", "resource_type"]

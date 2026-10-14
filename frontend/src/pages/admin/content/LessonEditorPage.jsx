@@ -20,7 +20,6 @@ import { slugify } from "../../../utils/formatters.js";
 
 const ROLES = [
   { code: "normal_user", label: "Learners" },
-  { code: "cybersecurity_officer", label: "Security officers" },
   { code: "system_admin", label: "Administrators" },
 ];
 

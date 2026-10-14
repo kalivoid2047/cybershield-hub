@@ -68,53 +68,53 @@ class TestIncidentVisibility:
 
         assert response.json()["count"] == 0
 
-    def test_officer_sees_all_incidents(self, user_client, officer_client, incident_category):
+    def test_admin_sees_all_incidents(self, user_client, admin_client, incident_category):
         user_client.post(reverse("incidents-list"), incident_payload(incident_category), format="json")
 
-        response = officer_client.get(reverse("incidents-list"))
+        response = admin_client.get(reverse("incidents-list"))
 
         assert response.json()["count"] == 1
 
 
 class TestIncidentAssignmentAndTransitions:
-    def test_officer_can_assign_incident_to_another_officer(self, user_client, officer_client, incident_category, officer_user):
+    def test_admin_can_assign_incident_to_an_admin(self, user_client, admin_client, incident_category, admin_user):
         create_response = user_client.post(reverse("incidents-list"), incident_payload(incident_category), format="json")
         incident_id = create_response.json()["id"]
 
-        response = officer_client.post(
-            reverse("incidents-assign", args=[incident_id]), {"officer_id": officer_user.id, "note": "Please investigate"}, format="json"
+        response = admin_client.post(
+            reverse("incidents-assign", args=[incident_id]), {"officer_id": admin_user.id, "note": "Please investigate"}, format="json"
         )
 
         assert response.status_code == 200
         incident = Incident.objects.get(id=incident_id)
-        assert incident.assigned_to == officer_user
+        assert incident.assigned_to == admin_user
         assert incident.status == Incident.INVESTIGATING
 
-    def test_normal_user_cannot_assign_incident(self, user_client, incident_category, officer_user):
+    def test_normal_user_cannot_assign_incident(self, user_client, incident_category, admin_user):
         create_response = user_client.post(reverse("incidents-list"), incident_payload(incident_category), format="json")
         incident_id = create_response.json()["id"]
 
         response = user_client.post(
-            reverse("incidents-assign", args=[incident_id]), {"officer_id": officer_user.id}, format="json"
+            reverse("incidents-assign", args=[incident_id]), {"officer_id": admin_user.id}, format="json"
         )
 
         assert response.status_code == 403
 
-    def test_assign_to_non_officer_is_rejected(self, user_client, officer_client, incident_category, other_normal_user):
+    def test_assign_to_non_admin_is_rejected(self, user_client, admin_client, incident_category, other_normal_user):
         create_response = user_client.post(reverse("incidents-list"), incident_payload(incident_category), format="json")
         incident_id = create_response.json()["id"]
 
-        response = officer_client.post(
+        response = admin_client.post(
             reverse("incidents-assign", args=[incident_id]), {"officer_id": other_normal_user.id}, format="json"
         )
 
         assert response.status_code == 400
 
-    def test_officer_can_transition_incident_status(self, user_client, officer_client, incident_category):
+    def test_admin_can_transition_incident_status(self, user_client, admin_client, incident_category):
         create_response = user_client.post(reverse("incidents-list"), incident_payload(incident_category), format="json")
         incident_id = create_response.json()["id"]
 
-        response = officer_client.post(
+        response = admin_client.post(
             reverse("incidents-transition", args=[incident_id]),
             {"status": "resolved", "note": "Confirmed false alarm.", "is_internal": False},
             format="json",
@@ -139,21 +139,21 @@ class TestIncidentAssignmentAndTransitions:
 
 
 class TestIncidentQueueAndHeatmap:
-    def test_queue_is_officer_only_and_groups_by_status(self, user_client, officer_client, incident_category):
+    def test_queue_is_admin_only_and_groups_by_status(self, user_client, admin_client, incident_category):
         user_client.post(reverse("incidents-list"), incident_payload(incident_category), format="json")
 
         forbidden = user_client.get(reverse("incidents-queue"))
         assert forbidden.status_code == 403
 
-        response = officer_client.get(reverse("incidents-queue"))
+        response = admin_client.get(reverse("incidents-queue"))
         assert response.status_code == 200
         assert "open" in response.json()["data"]
         assert len(response.json()["data"]["open"]) == 1
 
-    def test_heatmap_returns_severity_status_counts(self, user_client, officer_client, incident_category):
+    def test_heatmap_returns_severity_status_counts(self, user_client, admin_client, incident_category):
         user_client.post(reverse("incidents-list"), incident_payload(incident_category, severity="critical"), format="json")
 
-        response = officer_client.get(reverse("incidents-heatmap"))
+        response = admin_client.get(reverse("incidents-heatmap"))
 
         assert response.status_code == 200
         rows = response.json()["data"]

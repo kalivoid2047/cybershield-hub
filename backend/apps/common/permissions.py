@@ -2,7 +2,6 @@ from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
 ADMIN = "system_admin"
-OFFICER = "cybersecurity_officer"
 USER = "normal_user"
 
 
@@ -20,11 +19,6 @@ class IsSystemAdmin(BasePermission):
         return role_code(request.user) == ADMIN
 
 
-class IsCyberOfficer(BasePermission):
-    def has_permission(self, request, view):
-        return role_code(request.user) in {ADMIN, OFFICER}
-
-
 class IsAdminOrReadOnly(BasePermission):
     def has_permission(self, request, view):
         if request.method in SAFE_METHODS:
@@ -32,9 +26,9 @@ class IsAdminOrReadOnly(BasePermission):
         return role_code(request.user) == ADMIN
 
 
-class IsOwnerOrOfficer(BasePermission):
+class IsOwnerOrAdmin(BasePermission):
     def has_object_permission(self, request, view, obj):
-        if role_code(request.user) in {ADMIN, OFFICER}:
+        if role_code(request.user) == ADMIN:
             return True
         owner = getattr(obj, "user", None) or getattr(obj, "reporter", None)
         return owner == request.user

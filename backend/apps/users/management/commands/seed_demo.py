@@ -1,7 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from apps.alerts.models import Notification, SecurityAlert
 from apps.incidents.models import Incident, IncidentCategory, IncidentUpdate
 from apps.phishing.models import PhishingSimulation
 from apps.quizzes.models import AnswerOption, Question, Quiz
@@ -11,7 +10,7 @@ from apps.users.models import Role, User
 
 
 class Command(BaseCommand):
-    help = "Seed CyberShield Hub with roles, demo users, lessons, quizzes, phishing simulations, incidents, and alerts."
+    help = "Seed CyberShield Hub with roles, demo users, lessons, quizzes, phishing simulations, and incidents."
 
     def add_arguments(self, parser):
         parser.add_argument("--password", default="CyberShield123!", help="Password for demo accounts.")
@@ -25,11 +24,9 @@ class Command(BaseCommand):
         self.seed_phishing(users["admin"])
         incident_categories = self.seed_incident_categories()
         self.seed_incidents(incident_categories, users)
-        self.seed_alerts(users["admin"])
         self.stdout.write(self.style.SUCCESS("CyberShield demo data seeded."))
         self.stdout.write("Demo accounts:")
         self.stdout.write("  admin@cybershield.local / CyberShield123!")
-        self.stdout.write("  officer@cybershield.local / CyberShield123!")
         self.stdout.write("  user@cybershield.local / CyberShield123!")
 
     def seed_roles(self):
@@ -37,12 +34,7 @@ class Command(BaseCommand):
             (
                 Role.NORMAL_USER,
                 "Normal User",
-                ["training.read", "quiz.attempt", "phishing.attempt", "incident.report", "alert.read"],
-            ),
-            (
-                Role.CYBERSECURITY_OFFICER,
-                "Cybersecurity Officer",
-                ["incident.manage", "analytics.read", "audit.read", "alert.manage", "training.read"],
+                ["training.read", "quiz.attempt", "phishing.attempt", "incident.report"],
             ),
             (
                 Role.SYSTEM_ADMIN,
@@ -62,7 +54,6 @@ class Command(BaseCommand):
     def seed_users(self, roles, password):
         specs = {
             "admin": ("admin@cybershield.local", "System", "Admin", roles[Role.SYSTEM_ADMIN], True, True),
-            "officer": ("officer@cybershield.local", "SOC", "Officer", roles[Role.CYBERSECURITY_OFFICER], True, False),
             "user": ("user@cybershield.local", "Demo", "Learner", roles[Role.NORMAL_USER], False, False),
         }
         users = {}
@@ -208,7 +199,7 @@ class Command(BaseCommand):
                 "affected_system": "Identity Provider",
                 "occurred_at": timezone.now(),
                 "reporter": users["user"],
-                "assigned_to": users["officer"],
+                "assigned_to": users["admin"],
                 "status": Incident.INVESTIGATING,
                 "is_draft": False,
             },
@@ -216,19 +207,6 @@ class Command(BaseCommand):
         IncidentUpdate.objects.get_or_create(
             incident=incident,
             note="Initial triage started. User account temporarily locked pending review.",
-            defaults={"actor": users["officer"], "status_to": Incident.INVESTIGATING, "is_internal": False},
+            defaults={"actor": users["admin"], "status_to": Incident.INVESTIGATING, "is_internal": False},
         )
 
-    def seed_alerts(self, admin):
-        alert, _ = SecurityAlert.objects.update_or_create(
-            title="Credential phishing campaign observed",
-            defaults={
-                "body": "A campaign using fake Microsoft password reset pages is targeting staff. Report suspicious reset emails immediately.",
-                "priority": SecurityAlert.HIGH,
-                "alert_type": SecurityAlert.THREAT_ADVISORY,
-                "is_active": True,
-                "created_by": admin,
-            },
-        )
-        for user in User.objects.filter(is_active=True):
-            Notification.objects.get_or_create(user=user, alert=alert)

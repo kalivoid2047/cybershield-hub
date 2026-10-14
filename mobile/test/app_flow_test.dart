@@ -160,10 +160,10 @@ const _incident = {
   'created_at': '2026-09-29T09:30:00Z',
   'assigned_to': {
     'id': 2,
-    'email': 'officer@cybershield.local',
-    'first_name': 'Olive',
-    'last_name': 'Officer',
-    'role': {'code': 'cybersecurity_officer', 'name': 'Officer'},
+    'email': 'admin@cybershield.local',
+    'first_name': 'Adam',
+    'last_name': 'Admin',
+    'role': {'code': 'system_admin', 'name': 'Admin'},
   },
   'updates': [
     {
@@ -174,19 +174,6 @@ const _incident = {
       'created_at': '2026-09-29T09:30:00Z',
     },
   ],
-};
-
-const _notification = {
-  'id': 4,
-  'is_read': false,
-  'created_at': '2026-09-30T08:00:00Z',
-  'alert': {
-    'id': 1,
-    'title': 'Phishing wave targeting finance',
-    'body': 'Do not open unexpected invoices.',
-    'priority': 'high',
-    'alert_type': 'threat_advisory',
-  },
 };
 
 http.Response _json(Object body, [int status = 200]) => http.Response(
@@ -219,7 +206,6 @@ Future<http.Response> _route(http.Request request) async {
         'quiz_average': 71.5,
         'phishing_average': 40,
         'open_incidents': 1,
-        'unread_notifications': 1,
       });
     case 'GET /training/lessons/recommended/':
       return _ok([_lesson]);
@@ -258,12 +244,6 @@ Future<http.Response> _route(http.Request request) async {
       return _ok(_incident);
     case 'GET /incidents/categories/':
       return _page([_incident['category']!]);
-    case 'GET /alerts/notifications/':
-      return _page([_notification]);
-    case 'POST /alerts/notifications/4/read/':
-      return _ok({});
-    case 'POST /alerts/notifications/read_all/':
-      return _ok({});
   }
   return _json({
     'success': false,
@@ -483,7 +463,7 @@ void main() {
     await tester.tap(find.text('Suspicious attachment'));
     await tester.pumpAndSettle();
     expect(find.text('INC-0021'), findsOneWidget);
-    expect(find.text('Olive Officer'), findsOneWidget);
+    expect(find.text('Adam Admin'), findsOneWidget);
     expect(find.text('Incident submitted.'), findsOneWidget);
     await tester.pageBack();
     await tester.pumpAndSettle();
@@ -497,18 +477,11 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('alerts: unread badge, mark read; account: sign out', (
+  testWidgets('account: sign out', (
     tester,
   ) async {
     await pumpApp(tester);
     await signIn(tester);
-
-    expect(find.text('1'), findsWidgets); // nav badge + dashboard stat
-    await goTab(tester, 'Alerts');
-    expect(find.text('Phishing wave targeting finance'), findsOneWidget);
-    await tester.tap(find.text('Phishing wave targeting finance'));
-    await tester.pumpAndSettle();
-    expect(find.widgetWithText(TextButton, 'Mark all read'), findsOneWidget);
 
     await goTab(tester, 'Account');
     expect(find.text('Una User'), findsOneWidget);

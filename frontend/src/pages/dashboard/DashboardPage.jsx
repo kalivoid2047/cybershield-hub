@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Award, Bell, BookOpen, BrainCircuit, ClipboardList, FileWarning, ShieldCheck, Sparkles, Target } from "lucide-react";
+import { ArrowRight, Award, BookOpen, BrainCircuit, ClipboardList, FileWarning, ShieldCheck, Sparkles, Target } from "lucide-react";
 import { motion } from "framer-motion";
 import Card from "../../components/common/Card.jsx";
 import EmptyState from "../../components/common/EmptyState.jsx";
@@ -13,7 +13,6 @@ import DoughnutChart from "../../components/charts/DoughnutChart.jsx";
 import RadarScoreChart from "../../components/charts/RadarScoreChart.jsx";
 import TiltCard from "../../components/common/TiltCard.jsx";
 import Shield3D from "../../components/three/Shield3D.jsx";
-import { useAlerts } from "../../contexts/AlertsContext.jsx";
 import { useAuth } from "../../contexts/AuthContext.jsx";
 import useAsync from "../../hooks/useAsync.js";
 import usePageTitle from "../../hooks/usePageTitle.js";
@@ -27,7 +26,6 @@ function list(value) {
 export default function DashboardPage() {
   usePageTitle("Dashboard");
   const { user } = useAuth();
-  const { notifications, unread } = useAlerts();
   const summary = useAsync(() => dashboardService.summary(), []);
   const lessonsQuery = useAsync(() => trainingService.lessons().then(list), []);
   const incidentsQuery = useAsync(() => incidentService.list().then(list), []);
@@ -60,10 +58,9 @@ export default function DashboardPage() {
     else if (notStarted) items.push({ key: "lesson", icon: BookOpen, to: `/training/${notStarted.slug}`, title: `Start: ${notStarted.title}`, detail: `${notStarted.estimated_minutes} min lesson` });
     const quiz = quizzes.find((item) => item.attempts_remaining !== 0 && Number(item.best_score || 0) < Number(item.pass_score || 0));
     if (quiz) items.push({ key: "quiz", icon: BrainCircuit, to: `/quizzes/${quiz.id}`, title: `Take quiz: ${quiz.title}`, detail: `Pass mark ${quiz.pass_score}%` });
-    if (unread > 0) items.push({ key: "alerts", icon: Bell, to: "/alerts", title: `Review ${unread} unread alert${unread === 1 ? "" : "s"}`, detail: "Stay on top of current threats" });
     if (data && !data.phishing_average) items.push({ key: "phishing", icon: FileWarning, to: "/phishing", title: "Try the phishing simulator", detail: "Practice spotting suspicious email" });
     return items.slice(0, 4);
-  }, [lessons, quizzes, unread, data]);
+  }, [lessons, quizzes, data]);
 
   const activity = useMemo(() => {
     const fromIncidents = incidents.map((incident) => ({
@@ -75,19 +72,8 @@ export default function DashboardPage() {
       badge: incident.severity,
       date: incident.occurred_at,
     }));
-    const fromAlerts = notifications
-      .filter((item) => item.alert)
-      .map((item) => ({
-        key: `alert-${item.id}`,
-        kind: "Alert",
-        to: "/alerts",
-        title: item.alert.title,
-        meta: item.is_read ? "Read" : "Unread",
-        badge: item.alert.priority,
-        date: item.alert.starts_at,
-      }));
-    return [...fromIncidents, ...fromAlerts].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0)).slice(0, 6);
-  }, [incidents, notifications]);
+    return fromIncidents.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0)).slice(0, 6);
+  }, [incidents]);
 
   const loadingSummary = summary.loading && !data;
 
@@ -174,8 +160,8 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
+      <div className="grid gap-6">
+        <Card>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="font-semibold text-white">Recent lessons</h2>
             <Link to="/training" className="focus-ring rounded text-sm text-cyanx hover:text-sky-200">
@@ -204,31 +190,6 @@ export default function DashboardPage() {
             </div>
           )}
         </Card>
-        <Card>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-semibold text-white">Threat alerts</h2>
-            <Link to="/alerts" className="focus-ring rounded text-sm text-cyanx hover:text-sky-200">
-              {unread > 0 ? `${unread} unread` : "View all"}
-            </Link>
-          </div>
-          {notifications.length === 0 ? (
-            <p className="text-sm text-slate-400">No alerts right now.</p>
-          ) : (
-            <ul className="space-y-3">
-              {notifications.slice(0, 3).map((item) => (
-                <li key={item.id}>
-                  <Link to="/alerts" className="focus-ring block rounded-md border border-white/10 bg-white/[0.035] p-3 transition hover:bg-white/[0.06]">
-                    <div className="mb-2 flex items-center justify-between gap-2">
-                      <p className="text-sm font-semibold text-white">{item.alert?.title}</p>
-                      <StatusBadge value={item.alert?.priority} />
-                    </div>
-                    <p className="line-clamp-2 text-sm text-slate-400">{item.alert?.body}</p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
       </div>
 
       <Card>
@@ -241,7 +202,7 @@ export default function DashboardPage() {
         {incidentsQuery.loading ? (
           <Skeleton className="h-24" />
         ) : activity.length === 0 ? (
-          <p className="py-3 text-sm text-slate-400">Nothing to show yet. Incident reports and alerts will appear here.</p>
+          <p className="py-3 text-sm text-slate-400">Nothing to show yet. Incident reports will appear here.</p>
         ) : (
           <ul className="divide-y divide-white/10">
             {activity.map((row) => (

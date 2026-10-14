@@ -1,6 +1,6 @@
 # CyberShield Hub
 
-CyberShield Hub is an enterprise cybersecurity awareness and incident response platform. It combines a training workspace, quiz engine, phishing simulator, incident intake and SOC-style response queue, analytics, alerts, role-based access control, and an audit trail — all behind a single JWT-secured REST API with a React single-page app on top.
+CyberShield Hub is an enterprise cybersecurity awareness and incident response platform. It combines a training workspace, quiz engine, phishing simulator, incident intake and SOC-style response queue, analytics, role-based access control, and an audit trail — all behind a single JWT-secured REST API with a React single-page app on top.
 
 ## Stack
 
@@ -12,15 +12,14 @@ CyberShield Hub is an enterprise cybersecurity awareness and incident response p
 
 | Module | Description |
 | --- | --- |
-| Authentication & RBAC | Registration, JWT login/logout with refresh rotation and blacklist, password reset and email verification tokens, login attempt tracking, session revocation. Three roles: normal user, cybersecurity officer, system administrator. |
-| Dashboard | Per-user security score, learning progress, quiz and phishing performance, incidents, and alerts. |
+| Authentication & RBAC | Registration, JWT login/logout with refresh rotation and blacklist, password reset and email verification tokens, login attempt tracking, session revocation. Two roles: normal user and system administrator. |
+| Dashboard | Per-user security score, learning progress, quiz and phishing performance and incidents. |
 | Training | Categorized lessons with rich content, difficulty levels, tags, progress tracking, completion, bookmarks, search/filtering, and role-aware recommendations. |
 | Quizzes | Timed multiple-choice assessments with scoring, pass/fail, attempt history, per-competency weakness analysis, and recommendations. |
 | Phishing simulator | Realistic inbox scenarios the user classifies as safe or suspicious, with URL inspection, red-flag selection, and scored feedback. |
 | Incident reporting | Incident submission with evidence uploads (allow-listed file types, size limits), drafts, auto-generated reference numbers, and status tracking. |
-| SOC management | Officer-facing incident queue (Kanban), assignment, escalation, status workflow with timeline entries, and severity/status heatmap data. |
-| Analytics | User dashboard metrics plus organization-wide training, quiz, phishing, incident, and risk-score reporting for officers/admins. |
-| Alerts | Admin-managed threat advisories and announcements with a per-user notification center. |
+| SOC management | Admin-facing incident queue (Kanban), assignment, escalation, status workflow with timeline entries, and severity/status heatmap data. |
+| Analytics | User dashboard metrics plus organization-wide training, quiz, phishing, incident, and risk-score reporting for admins. |
 | Audit log | Immutable-style log of every mutating API request, with filtering, search, and CSV export. |
 
 ## Project Structure
@@ -35,7 +34,6 @@ backend/
     quizzes/              quiz engine, answers, attempts, scoring
     phishing/             phishing simulations and attempt scoring
     incidents/            incident intake, evidence, queue, assignment, timeline
-    alerts/               advisories, announcements, notifications
     analytics/            user and organization reporting APIs
     audit/                audit log middleware, API, and CSV export
 frontend/
@@ -95,7 +93,6 @@ Created by `python manage.py seed_demo`:
 | Account | Password | Role |
 | --- | --- | --- |
 | `admin@cybershield.local` | `CyberShield123!` | System administrator |
-| `officer@cybershield.local` | `CyberShield123!` | Cybersecurity officer |
 | `user@cybershield.local` | `CyberShield123!` | Normal user |
 
 ### Using MySQL instead of SQLite
@@ -130,7 +127,7 @@ pytest                                       # run the full suite
 pytest --cov=apps --cov-report=term-missing  # with coverage
 ```
 
-The pytest suite covers auth/RBAC, training progress, quiz and phishing grading, incident workflow (assignment/transition/queue), alert fan-out, audit logging, and analytics, across `backend/apps/*/tests/`.
+The pytest suite covers auth/RBAC, training progress, quiz and phishing grading, incident workflow (assignment/transition/queue), audit logging, and analytics, across `backend/apps/*/tests/`.
 
 ## Security Posture
 

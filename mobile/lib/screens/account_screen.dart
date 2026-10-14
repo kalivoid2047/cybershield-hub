@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../api/api_client.dart';
 import '../api/cybershield_api.dart';
 import '../config.dart';
-import '../state/alerts_state.dart';
 import '../state/auth_state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
@@ -124,7 +123,6 @@ class AccountScreen extends StatelessWidget {
 
   Future<void> _confirmSignOut(BuildContext context) async {
     final auth = context.read<AuthState>();
-    final alerts = context.read<AlertsState>();
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -142,7 +140,6 @@ class AccountScreen extends StatelessWidget {
       ),
     );
     if (ok == true) {
-      alerts.reset();
       await auth.logout();
     }
   }

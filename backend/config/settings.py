@@ -52,7 +52,6 @@ INSTALLED_APPS = [
     "apps.quizzes",
     "apps.phishing",
     "apps.incidents",
-    "apps.alerts",
     "apps.analytics",
     "apps.audit",
 ]

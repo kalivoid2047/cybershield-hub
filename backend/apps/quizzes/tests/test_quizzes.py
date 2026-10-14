@@ -60,7 +60,7 @@ class TestQuizLifecycle:
         assert attempt.completed_at is not None
         assert attempt.is_complete is True
 
-    def test_attempts_endpoint_lists_only_own_attempts(self, user_client, officer_client, quiz):
+    def test_attempts_endpoint_lists_only_own_attempts(self, user_client, admin_client, quiz):
         question = quiz.questions.first()
         answer = question.answers.first()
         user_client.post(
@@ -89,7 +89,7 @@ class TestQuizLifecycle:
 
 
 class TestQuizAttemptVisibility:
-    def test_officer_can_see_all_attempts(self, user_client, officer_client, quiz):
+    def test_admin_can_see_all_attempts(self, user_client, admin_client, quiz):
         question = quiz.questions.first()
         answer = question.answers.first()
         user_client.post(
@@ -98,7 +98,7 @@ class TestQuizAttemptVisibility:
             format="json",
         )
 
-        response = officer_client.get(reverse("quiz-attempts-list"))
+        response = admin_client.get(reverse("quiz-attempts-list"))
 
         assert response.status_code == 200
         assert response.json()["count"] == 1

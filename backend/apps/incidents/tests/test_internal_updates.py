@@ -18,10 +18,10 @@ def _report(user_client, category):
 
 
 class TestInternalNotesStayInternal:
-    def test_reporter_detail_hides_internal_updates(self, user_client, officer_client, incident_category, officer_user):
+    def test_reporter_detail_hides_internal_updates(self, user_client, admin_client, incident_category, admin_user):
         incident_id = _report(user_client, incident_category)
-        officer_client.post(reverse("incidents-assign", args=[incident_id]), {"officer_id": officer_user.id, "note": "secret triage"}, format="json")
-        officer_client.post(
+        admin_client.post(reverse("incidents-assign", args=[incident_id]), {"officer_id": admin_user.id, "note": "secret triage"}, format="json")
+        admin_client.post(
             reverse("incidents-transition", args=[incident_id]),
             {"status": "escalated", "note": "visible note", "is_internal": False},
             format="json",
@@ -34,10 +34,10 @@ class TestInternalNotesStayInternal:
         assert "secret triage" not in str(updates)
         assert any(update["note"] == "visible note" for update in updates)
 
-    def test_officer_detail_includes_internal_updates(self, user_client, officer_client, incident_category, officer_user):
+    def test_admin_detail_includes_internal_updates(self, user_client, admin_client, incident_category, admin_user):
         incident_id = _report(user_client, incident_category)
-        officer_client.post(reverse("incidents-assign", args=[incident_id]), {"officer_id": officer_user.id, "note": "secret triage"}, format="json")
+        admin_client.post(reverse("incidents-assign", args=[incident_id]), {"officer_id": admin_user.id, "note": "secret triage"}, format="json")
 
-        updates = officer_client.get(reverse("incidents-detail", args=[incident_id])).json()["updates"]
+        updates = admin_client.get(reverse("incidents-detail", args=[incident_id])).json()["updates"]
 
         assert any(update["is_internal"] for update in updates)

@@ -39,8 +39,8 @@ class TestOrganizationAnalytics:
         response = user_client.get(reverse("analytics-organization"))
         assert response.status_code == 403
 
-    def test_officer_can_view_organization_metrics(self, officer_client):
-        response = officer_client.get(reverse("analytics-organization"))
+    def test_admin_can_view_organization_metrics(self, admin_client):
+        response = admin_client.get(reverse("analytics-organization"))
 
         assert response.status_code == 200
         data = response.json()["data"]
@@ -53,10 +53,10 @@ class TestChartAnalytics:
         response = user_client.get(reverse("analytics-charts"))
         assert response.status_code == 403
 
-    def test_officer_receives_chart_payload_shape(self, officer_client, quiz, normal_user):
+    def test_admin_receives_chart_payload_shape(self, admin_client, quiz, normal_user):
         QuizAttempt.objects.create(user=normal_user, quiz=quiz, score=90, passed=True, completed_at="2026-08-01T10:00:00Z")
 
-        response = officer_client.get(reverse("analytics-charts"))
+        response = admin_client.get(reverse("analytics-charts"))
 
         assert response.status_code == 200
         data = response.json()["data"]
@@ -65,21 +65,21 @@ class TestChartAnalytics:
 
 
 class TestTrainingCompletionRate:
-    def test_rate_is_out_of_all_lessons_each_active_user_could_finish(self, officer_client, published_lesson, normal_user, officer_user):
+    def test_rate_is_out_of_all_lessons_each_active_user_could_finish(self, admin_client, published_lesson, normal_user, admin_user):
         from apps.training.models import LessonProgress
 
         LessonProgress.objects.create(user=normal_user, lesson=published_lesson).mark_progress(100)
 
-        data = officer_client.get(reverse("analytics-organization")).json()["data"]
+        data = admin_client.get(reverse("analytics-organization")).json()["data"]
 
         # 2 active users x 1 published lesson = 2 possible completions, 1 achieved.
         assert data["training_completion_rate"] == 50.0
 
-    def test_started_but_unfinished_lessons_do_not_inflate_the_rate(self, officer_client, published_lesson, normal_user):
+    def test_started_but_unfinished_lessons_do_not_inflate_the_rate(self, admin_client, published_lesson, normal_user):
         from apps.training.models import LessonProgress
 
         LessonProgress.objects.create(user=normal_user, lesson=published_lesson).mark_progress(40)
 
-        data = officer_client.get(reverse("analytics-organization")).json()["data"]
+        data = admin_client.get(reverse("analytics-organization")).json()["data"]
 
         assert data["training_completion_rate"] == 0

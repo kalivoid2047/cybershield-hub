@@ -81,9 +81,8 @@ class AppUser {
     return (letters.isEmpty ? email[0] : letters).toUpperCase();
   }
 
-  /// Officers and admins get the SOC-facing incident views.
-  bool get isStaff =>
-      roleCode == 'cybersecurity_officer' || roleCode == 'system_admin';
+  /// Admins get the SOC-facing incident views.
+  bool get isStaff => roleCode == 'system_admin';
 }
 
 // -- training ----------------------------------------------------------------
@@ -571,51 +570,6 @@ class IncidentUpdate {
   final DateTime? createdAt;
 }
 
-// -- alerts ------------------------------------------------------------------
-
-class AppNotification {
-  AppNotification({
-    required this.id,
-    required this.title,
-    required this.body,
-    required this.priority,
-    required this.alertType,
-    required this.isRead,
-    required this.createdAt,
-  });
-
-  factory AppNotification.fromJson(Json json) {
-    final alert = _map(json['alert']);
-    return AppNotification(
-      id: _int(json['id']),
-      title: _str(alert['title']),
-      body: _str(alert['body']),
-      priority: _str(alert['priority'], 'info'),
-      alertType: _str(alert['alert_type']),
-      isRead: json['is_read'] == true,
-      createdAt: _date(json['created_at']),
-    );
-  }
-
-  final int id;
-  final String title;
-  final String body;
-  final String priority;
-  final String alertType;
-  final bool isRead;
-  final DateTime? createdAt;
-
-  AppNotification asRead() => AppNotification(
-    id: id,
-    title: title,
-    body: body,
-    priority: priority,
-    alertType: alertType,
-    isRead: true,
-    createdAt: createdAt,
-  );
-}
-
 // -- dashboard ---------------------------------------------------------------
 
 class DashboardStats {
@@ -626,7 +580,6 @@ class DashboardStats {
     required this.quizAverage,
     required this.phishingAverage,
     required this.openIncidents,
-    required this.unreadNotifications,
   });
 
   factory DashboardStats.fromJson(Json json) {
@@ -638,7 +591,6 @@ class DashboardStats {
       quizAverage: _num(json['quiz_average']).toDouble(),
       phishingAverage: _num(json['phishing_average']).toDouble(),
       openIncidents: _int(json['open_incidents']),
-      unreadNotifications: _int(json['unread_notifications']),
     );
   }
 
@@ -648,5 +600,4 @@ class DashboardStats {
   final double quizAverage;
   final double phishingAverage;
   final int openIncidents;
-  final int unreadNotifications;
 }

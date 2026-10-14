@@ -5,8 +5,7 @@ from django.db.models.functions import TruncMonth
 from django.utils import timezone
 from rest_framework.views import APIView
 
-from apps.alerts.models import Notification, SecurityAlert
-from apps.common.permissions import IsCyberOfficer
+from apps.common.permissions import IsSystemAdmin
 from apps.common.responses import ok
 from apps.incidents.models import Incident
 from apps.phishing.models import PhishingAttempt
@@ -23,7 +22,6 @@ class UserDashboardAnalyticsView(APIView):
         avg_quiz = QuizAttempt.objects.filter(user=user, completed_at__isnull=False).aggregate(value=Avg("score"))["value"] or 0
         phishing_avg = PhishingAttempt.objects.filter(user=user).aggregate(value=Avg("score"))["value"] or 0
         open_incidents = Incident.objects.filter(reporter=user).exclude(status__in=[Incident.RESOLVED, Incident.CLOSED]).count()
-        unread = Notification.objects.filter(user=user, is_read=False).count()
         security_score = round((completed_lessons / total_lessons * 35 if total_lessons else 0) + (float(avg_quiz) * 0.35) + (float(phishing_avg) * 0.2) + max(0, 10 - open_incidents * 2), 0)
         user.security_score = min(100, int(security_score))
         user.save(update_fields=["security_score"])
@@ -34,13 +32,12 @@ class UserDashboardAnalyticsView(APIView):
                 "quiz_average": round(float(avg_quiz), 2),
                 "phishing_average": round(float(phishing_avg), 2),
                 "open_incidents": open_incidents,
-                "unread_notifications": unread,
             }
         )
 
 
 class OrganizationAnalyticsView(APIView):
-    permission_classes = [IsCyberOfficer]
+    permission_classes = [IsSystemAdmin]
 
     def get(self, request):
         now = timezone.now()
@@ -69,7 +66,7 @@ class OrganizationAnalyticsView(APIView):
 
 
 class ChartAnalyticsView(APIView):
-    permission_classes = [IsCyberOfficer]
+    permission_classes = [IsSystemAdmin]
 
     def get(self, request):
         incident_trends = (
@@ -104,6 +101,5 @@ class ChartAnalyticsView(APIView):
                 "phishing_awareness": list(phishing),
                 "training_by_category": list(training_by_category),
                 "engagement": engagement,
-                "active_alerts": SecurityAlert.objects.filter(is_active=True).count(),
             }
         )

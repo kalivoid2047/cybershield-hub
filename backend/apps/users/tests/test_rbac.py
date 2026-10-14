@@ -9,11 +9,7 @@ class TestRoleAndUserAdminAccess:
         response = user_client.get(reverse("users-list"))
         assert response.status_code == 403
 
-    def test_officer_cannot_list_users(self, officer_client):
-        response = officer_client.get(reverse("users-list"))
-        assert response.status_code == 403
-
-    def test_admin_can_list_users(self, admin_client, normal_user, officer_user):
+    def test_admin_can_list_users(self, admin_client, normal_user, admin_user):
         response = admin_client.get(reverse("users-list"))
         assert response.status_code == 200
 
@@ -35,13 +31,11 @@ class TestRoleAndUserAdminAccess:
         assert normal_user.is_deactivated is False
 
     def test_admin_can_change_a_users_role_via_the_admin_endpoint(self, admin_client, normal_user, roles):
-        response = admin_client.patch(
-            reverse("users-detail", args=[normal_user.id]), {"role_id": roles["cybersecurity_officer"].id}, format="json"
-        )
+        response = admin_client.patch(reverse("users-detail", args=[normal_user.id]), {"role_id": roles["system_admin"].id}, format="json")
 
         assert response.status_code == 200
         normal_user.refresh_from_db()
-        assert normal_user.role.code == "cybersecurity_officer"
+        assert normal_user.role.code == "system_admin"
 
     def test_admin_can_reset_failed_login_counter(self, admin_client, normal_user):
         normal_user.failed_login_attempts = 5

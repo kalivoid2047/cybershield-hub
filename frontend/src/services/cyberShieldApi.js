@@ -1,5 +1,5 @@
 import { apiClient, unwrap } from "../api/client.js";
-import { alerts, auditLogs, chartData, dashboardSummary, incidents, lessons, mockUser, phishingSimulations, quizzes, users } from "../data/mockData.js";
+import { auditLogs, chartData, dashboardSummary, incidents, lessons, mockUser, phishingSimulations, quizzes, users } from "../data/mockData.js";
 
 async function withFallback(request, fallback) {
   try {
@@ -178,15 +178,6 @@ export const incidentService = {
     withFallback(() => apiClient.post(`/incidents/incidents/${id}/assign/`, { officer_id: officerId, note }), {}),
   transition: (id, status, note, isInternal = false) =>
     withFallback(() => apiClient.post(`/incidents/incidents/${id}/transition/`, { status, note, is_internal: isInternal }), {}),
-};
-
-export const alertService = {
-  list: () => withFallback(() => apiClient.get("/alerts/alerts/"), alerts),
-  notifications: () => withFallback(() => apiClient.get("/alerts/notifications/"), () => alerts.map((alert) => ({ id: alert.id, alert, is_read: false }))),
-  markRead: (id) => withFallback(() => apiClient.post(`/alerts/notifications/${id}/read/`), {}),
-  markAllRead: () => withFallback(() => apiClient.post("/alerts/notifications/read_all/"), {}),
-  // Admin-only: publishes an alert and fans it out as a notification to the audience.
-  create: (payload) => apiClient.post("/alerts/alerts/", payload).then(unwrap),
 };
 
 export const analyticsService = {

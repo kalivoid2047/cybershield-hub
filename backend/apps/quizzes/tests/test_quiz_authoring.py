@@ -76,9 +76,8 @@ class TestEditorEndpoint:
         answers = response.json()["data"]["questions"][0]["answers"]
         assert any(answer["is_correct"] for answer in answers)
 
-    def test_learners_and_officers_cannot_use_it(self, user_client, officer_client, quiz):
+    def test_learners_cannot_use_it(self, user_client, quiz):
         assert user_client.get(reverse("quizzes-editor", args=[quiz.id])).status_code == 403
-        assert officer_client.get(reverse("quizzes-editor", args=[quiz.id])).status_code == 403
 
 
 class TestEditingKeepsHistory:

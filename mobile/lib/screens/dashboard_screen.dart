@@ -16,7 +16,7 @@ import 'lesson_detail_screen.dart';
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key, required this.onOpenTab});
 
-  /// Switches the bottom-navigation tab (1 = Learn, 2 = Incidents, 3 = Alerts).
+  /// Switches the bottom-navigation tab (1 = Learn, 2 = Incidents, 3 = Account).
   final ValueChanged<int> onOpenTab;
 
   @override
@@ -59,7 +59,7 @@ class DashboardScreen extends StatelessWidget {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () => onOpenTab(4),
+                  onTap: () => onOpenTab(3),
                   child: Container(
                     width: 48,
                     height: 48,
@@ -123,18 +123,6 @@ class DashboardScreen extends StatelessWidget {
                         ? Palette.warning
                         : Palette.success,
                     onTap: () => onOpenTab(2),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _StatTile(
-                    icon: Icons.notifications_outlined,
-                    label: 'Unread alerts',
-                    value: '${stats.unreadNotifications}',
-                    color: stats.unreadNotifications > 0
-                        ? Palette.danger
-                        : Palette.success,
-                    onTap: () => onOpenTab(3),
                   ),
                 ),
               ],

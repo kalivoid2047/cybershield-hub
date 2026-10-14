@@ -1,6 +1,5 @@
 export const roles = {
   user: "normal_user",
-  officer: "cybersecurity_officer",
   admin: "system_admin",
 };
 
@@ -24,35 +23,7 @@ export const dashboardSummary = {
   quiz_average: 84,
   phishing_average: 78,
   open_incidents: 4,
-  unread_notifications: 6,
 };
-
-export const alerts = [
-  {
-    id: 1,
-    title: "Credential phishing campaign observed",
-    body: "Fake password reset pages are targeting staff. Report suspicious reset emails immediately.",
-    priority: "high",
-    alert_type: "threat_advisory",
-    starts_at: "2026-05-29T07:00:00Z",
-  },
-  {
-    id: 2,
-    title: "Daily tip: verify payment requests",
-    body: "Confirm invoice changes using an approved out-of-band channel before approving payment.",
-    priority: "medium",
-    alert_type: "daily_tip",
-    starts_at: "2026-05-29T08:00:00Z",
-  },
-  {
-    id: 3,
-    title: "VPN maintenance window",
-    body: "Remote access maintenance is scheduled for Saturday 01:00 UTC.",
-    priority: "info",
-    alert_type: "announcement",
-    starts_at: "2026-05-28T11:00:00Z",
-  },
-];
 
 export const lessons = [
   {
@@ -224,7 +195,7 @@ export const incidents = [
     occurred_at: "2026-05-29T08:20:00Z",
     priority_score: 84,
     reporter: { first_name: "Demo", last_name: "Learner", email: "user@cybershield.local" },
-    assigned_to: { first_name: "SOC", last_name: "Officer", email: "officer@cybershield.local" },
+    assigned_to: { first_name: "Site", last_name: "Admin", email: "admin@cybershield.local" },
     description: "User received multiple unexpected MFA prompts after interacting with a reset email.",
     updates: [
       { id: 1, status_to: "open", note: "Incident submitted.", created_at: "2026-05-29T08:24:00Z" },
@@ -257,7 +228,7 @@ export const incidents = [
     occurred_at: "2026-05-27T15:12:00Z",
     priority_score: 100,
     reporter: { first_name: "Brian", last_name: "Chirwa", email: "brian@cybershield.local" },
-    assigned_to: { first_name: "SOC", last_name: "Officer", email: "officer@cybershield.local" },
+    assigned_to: { first_name: "Site", last_name: "Admin", email: "admin@cybershield.local" },
     description: "A public link exposed a payroll export to anyone with the URL.",
     updates: [{ id: 4, status_to: "escalated", note: "Legal and privacy teams notified.", created_at: "2026-05-27T15:40:00Z" }],
   },
@@ -272,31 +243,20 @@ export const incidents = [
     occurred_at: "2026-05-26T09:05:00Z",
     priority_score: 55,
     reporter: { first_name: "Nia", last_name: "Cole", email: "nia@cybershield.local" },
-    assigned_to: { first_name: "SOC", last_name: "Officer", email: "officer@cybershield.local" },
+    assigned_to: { first_name: "Site", last_name: "Admin", email: "admin@cybershield.local" },
     description: "Attachment opened from untrusted sender. Endpoint isolated and rebuilt.",
     updates: [{ id: 5, status_to: "resolved", note: "Containment complete.", created_at: "2026-05-26T13:25:00Z" }],
   },
 ];
 
 export const auditLogs = [
-  { id: 1, created_at: "2026-05-29T08:40:00Z", actor: { email: "officer@cybershield.local" }, action: "POST incident-transition", resource_type: "incidents", ip_address: "10.10.4.21" },
+  { id: 1, created_at: "2026-05-29T08:40:00Z", actor: { email: "admin@cybershield.local" }, action: "POST incident-transition", resource_type: "incidents", ip_address: "10.10.4.21" },
   { id: 2, created_at: "2026-05-29T08:31:00Z", actor: { email: "admin@cybershield.local" }, action: "POST security-alerts", resource_type: "alerts", ip_address: "10.10.4.10" },
   { id: 3, created_at: "2026-05-29T08:22:00Z", actor: { email: "user@cybershield.local" }, action: "POST incidents", resource_type: "incidents", ip_address: "10.10.8.44" },
 ];
 
 export const users = [
   mockUser,
-  {
-    id: 2,
-    email: "officer@cybershield.local",
-    first_name: "SOC",
-    last_name: "Officer",
-    organization: "CyberShield Demo Org",
-    department: "Security",
-    security_score: 91,
-    is_active: true,
-    role: { code: roles.officer, name: "Cybersecurity Officer" },
-  },
   {
     id: 3,
     email: "user@cybershield.local",

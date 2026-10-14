@@ -2,7 +2,7 @@ from django.db.models import Count, Max
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 
-from apps.common.permissions import IsAdminOrReadOnly, IsOwnerOrOfficer
+from apps.common.permissions import IsAdminOrReadOnly, IsOwnerOrAdmin
 from apps.common.responses import ok
 from apps.phishing.models import PhishingAttempt, PhishingSimulation
 from apps.phishing.serializers import PhishingAttemptSerializer, PhishingSimulationSerializer, SubmitPhishingAttemptSerializer
@@ -43,12 +43,12 @@ class PhishingSimulationViewSet(viewsets.ModelViewSet):
 
 class PhishingAttemptViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = PhishingAttemptSerializer
-    permission_classes = [IsOwnerOrOfficer]
+    permission_classes = [IsOwnerOrAdmin]
     filterset_fields = ["simulation", "correct"]
     ordering_fields = ["score", "created_at"]
 
     def get_queryset(self):
         qs = PhishingAttempt.objects.select_related("simulation", "user")
-        if self.request.user.role_code in {"system_admin", "cybersecurity_officer"}:
+        if self.request.user.role_code == "system_admin":
             return qs
         return qs.filter(user=self.request.user)

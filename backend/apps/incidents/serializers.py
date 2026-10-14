@@ -77,7 +77,7 @@ class IncidentDetailSerializer(IncidentListSerializer):
     def get_updates(self, obj):
         # Internal notes (assignment chatter, triage remarks) are for the response team only.
         request = self.context.get("request")
-        is_staff_role = bool(request and request.user.is_authenticated and request.user.role_code in {Role.SYSTEM_ADMIN, Role.CYBERSECURITY_OFFICER})
+        is_staff_role = bool(request and request.user.is_authenticated and request.user.role_code in {Role.SYSTEM_ADMIN})
         updates = [update for update in obj.updates.all() if is_staff_role or not update.is_internal]
         return IncidentUpdateSerializer(updates, many=True, context=self.context).data
 

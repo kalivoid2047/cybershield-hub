@@ -19,7 +19,6 @@ const IncidentReportPage = lazy(() => import("./pages/incidents/IncidentReportPa
 const IncidentTrackerPage = lazy(() => import("./pages/incidents/IncidentTrackerPage.jsx"));
 const SOCDashboardPage = lazy(() => import("./pages/incidents/SOCDashboardPage.jsx"));
 const AnalyticsPage = lazy(() => import("./pages/analytics/AnalyticsPage.jsx"));
-const AlertsPage = lazy(() => import("./pages/alerts/AlertsPage.jsx"));
 const AuditLogPage = lazy(() => import("./pages/admin/AuditLogPage.jsx"));
 const QuizSettingsPage = lazy(() => import("./pages/admin/QuizSettingsPage.jsx"));
 const UsersAdminPage = lazy(() => import("./pages/admin/UsersAdminPage.jsx"));
@@ -71,7 +70,7 @@ export default function App() {
         <Route
           path="/soc"
           element={
-            <ProtectedRoute roles={["cybersecurity_officer", "system_admin"]}>
+            <ProtectedRoute roles={["system_admin"]}>
               <SOCDashboardPage />
             </ProtectedRoute>
           }
@@ -79,12 +78,11 @@ export default function App() {
         <Route
           path="/analytics"
           element={
-            <ProtectedRoute roles={["cybersecurity_officer", "system_admin"]}>
+            <ProtectedRoute roles={["system_admin"]}>
               <AnalyticsPage />
             </ProtectedRoute>
           }
         />
-        <Route path="/alerts" element={<AlertsPage />} />
         <Route path="/account" element={<AccountPage />} />
         <Route
           path="/admin/users"
@@ -116,7 +114,7 @@ export default function App() {
         <Route
           path="/admin/audit"
           element={
-            <ProtectedRoute roles={["cybersecurity_officer", "system_admin"]}>
+            <ProtectedRoute roles={["system_admin"]}>
               <AuditLogPage />
             </ProtectedRoute>
           }

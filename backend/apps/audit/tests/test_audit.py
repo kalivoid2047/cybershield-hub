@@ -47,18 +47,18 @@ class TestAuditLogAccess:
         response = user_client.get(reverse("audit-logs-list"))
         assert response.status_code == 403
 
-    def test_officer_can_view_audit_logs(self, officer_client, officer_user):
-        AuditLog.objects.create(actor=officer_user, action="POST test", resource_type="incidents")
+    def test_admin_can_view_audit_logs(self, admin_client, admin_user):
+        AuditLog.objects.create(actor=admin_user, action="POST test", resource_type="incidents")
 
-        response = officer_client.get(reverse("audit-logs-list"))
+        response = admin_client.get(reverse("audit-logs-list"))
 
         assert response.status_code == 200
         assert response.json()["count"] == 1
 
-    def test_export_returns_csv_content(self, officer_client, officer_user):
-        AuditLog.objects.create(actor=officer_user, action="POST test", resource_type="incidents")
+    def test_export_returns_csv_content(self, admin_client, admin_user):
+        AuditLog.objects.create(actor=admin_user, action="POST test", resource_type="incidents")
 
-        response = officer_client.get(reverse("audit-logs-export"))
+        response = admin_client.get(reverse("audit-logs-export"))
 
         assert response.status_code == 200
         assert response["Content-Type"] == "text/csv"

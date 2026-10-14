@@ -1,18 +1,16 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Bell, LogOut, Menu, ShieldCheck, X } from "lucide-react";
+import { LogOut, Menu, ShieldCheck, X } from "lucide-react";
 import clsx from "clsx";
 import { motion } from "framer-motion";
 import SceneBackground from "../components/common/SceneBackground.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { AlertsProvider, useAlerts } from "../contexts/AlertsContext.jsx";
 import useMediaQuery from "../hooks/useMediaQuery.js";
 import { initials } from "../utils/formatters.js";
 import { navGroups, sectionFor } from "./navigation.js";
 
 function Sidebar({ open, isDesktop, onClose, closeRef }) {
   const { user, role, logout } = useAuth();
-  const { unread } = useAlerts();
   const navigate = useNavigate();
   // While the drawer is closed on small screens it is only translated off
   // screen, so it must also be made inert or its links stay in the tab order.
@@ -72,12 +70,6 @@ function Sidebar({ open, isDesktop, onClose, closeRef }) {
                   >
                     <item.icon className="h-4 w-4" aria-hidden="true" />
                     <span className="flex-1">{item.label}</span>
-                    {item.badge === "alerts" && unread > 0 && (
-                      <span className="rounded-full bg-danger px-2 py-0.5 text-xs font-bold text-white">
-                        {unread > 99 ? "99+" : unread}
-                        <span className="sr-only"> unread</span>
-                      </span>
-                    )}
                   </NavLink>
                 ))}
               </div>
@@ -118,7 +110,6 @@ function Sidebar({ open, isDesktop, onClose, closeRef }) {
 
 function ShellHeader({ onOpenNav, menuRef }) {
   const { user } = useAuth();
-  const { unread } = useAlerts();
   const { pathname } = useLocation();
   const section = sectionFor(pathname);
   const score = user?.security_score || 0;
@@ -151,18 +142,6 @@ function ShellHeader({ onOpenNav, menuRef }) {
           >
             <span className="hidden sm:inline">Security score </span>
             <span className="font-semibold">{score}</span>
-          </Link>
-          <Link
-            to="/alerts"
-            className="focus-ring relative rounded-xl border border-white/12 bg-white/[0.05] p-2.5 text-slate-300 transition hover:bg-white/10 hover:text-white"
-            aria-label={unread > 0 ? `Alerts, ${unread} unread` : "Alerts"}
-          >
-            <Bell className="h-5 w-5" aria-hidden="true" />
-            {unread > 0 && (
-              <span aria-hidden="true" className="absolute -right-1 -top-1 min-w-5 rounded-full bg-danger px-1 text-center text-[11px] font-bold leading-5 text-white">
-                {unread > 99 ? "99+" : unread}
-              </span>
-            )}
           </Link>
         </div>
       </div>
@@ -245,8 +224,6 @@ function Shell() {
 
 export default function AppShell() {
   return (
-    <AlertsProvider>
-      <Shell />
-    </AlertsProvider>
+    <Shell />
   );
 }

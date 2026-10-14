@@ -149,18 +149,6 @@ void main() {
     expect(detail.reference, isNotEmpty);
   });
 
-  test('notifications list and mark read', () async {
-    final items = await api.notifications();
-    expect(
-      items,
-      isNotEmpty,
-      reason: 'backfill should give a new user the standing alerts',
-    );
-    await api.markNotificationRead(items.first.id);
-    await api.markAllNotificationsRead();
-    expect((await api.notifications()).every((n) => n.isRead), isTrue);
-  });
-
   test('change password then log in with the new one', () async {
     const next = 'An0ther-Smoke-Pass-77!';
     await api.changePassword(password, next);

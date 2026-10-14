@@ -7,7 +7,7 @@ from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 
-from apps.common.permissions import IsAdminOrReadOnly, IsOwnerOrOfficer, IsSystemAdmin
+from apps.common.permissions import IsAdminOrReadOnly, IsOwnerOrAdmin, IsSystemAdmin
 from apps.common.responses import ok
 from apps.quizzes.models import Quiz, QuizAttempt
 from apps.quizzes.serializers import QuizAdminSerializer, QuizAttemptSerializer, QuizDetailSerializer, QuizListSerializer, SubmitQuizSerializer
@@ -94,7 +94,7 @@ class QuizViewSet(viewsets.ModelViewSet):
 
 class QuizAttemptViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = QuizAttemptSerializer
-    permission_classes = [IsOwnerOrOfficer]
+    permission_classes = [IsOwnerOrAdmin]
     filterset_fields = ["quiz", "passed"]
     ordering_fields = ["score", "created_at", "completed_at"]
 
@@ -102,6 +102,6 @@ class QuizAttemptViewSet(viewsets.ReadOnlyModelViewSet):
         qs = QuizAttempt.objects.select_related("quiz", "quiz__lesson", "user").prefetch_related(
             "answers", "answers__question", "answers__question__answers", "answers__selected_answer"
         )
-        if self.request.user.role_code in {"system_admin", "cybersecurity_officer"}:
+        if self.request.user.role_code == "system_admin":
             return qs
         return qs.filter(user=self.request.user)

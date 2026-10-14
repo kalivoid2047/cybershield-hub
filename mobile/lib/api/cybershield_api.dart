@@ -212,18 +212,4 @@ class CyberShieldApi {
     return Incident.fromJson(data as Json);
   }
 
-  // -- alerts ----------------------------------------------------------------
-
-  Future<List<AppNotification>> notifications() async =>
-      (await client.getList('/alerts/notifications/'))
-          .map(AppNotification.fromJson)
-          .toList();
-
-  Future<void> markNotificationRead(int id) async {
-    await client.post('/alerts/notifications/$id/read/');
-  }
-
-  Future<void> markAllNotificationsRead() async {
-    await client.post('/alerts/notifications/read_all/');
-  }
 }

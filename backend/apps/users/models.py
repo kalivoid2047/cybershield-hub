@@ -9,12 +9,10 @@ from apps.common.models import TimeStampedModel
 
 class Role(TimeStampedModel):
     NORMAL_USER = "normal_user"
-    CYBERSECURITY_OFFICER = "cybersecurity_officer"
     SYSTEM_ADMIN = "system_admin"
 
     ROLE_CHOICES = (
         (NORMAL_USER, "Normal User"),
-        (CYBERSECURITY_OFFICER, "Cybersecurity Officer"),
         (SYSTEM_ADMIN, "System Administrator"),
     )
 

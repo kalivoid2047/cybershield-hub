@@ -97,13 +97,13 @@ class TestPhishingAttemptVisibility:
 
         assert response.json()["count"] == 0
 
-    def test_officer_sees_all_attempts(self, user_client, officer_client, phishing_simulation):
+    def test_admin_sees_all_attempts(self, user_client, admin_client, phishing_simulation):
         user_client.post(
             reverse("phishing-simulations-submit", args=[phishing_simulation.id]),
             {"classification": "suspicious", "selected_flags": []},
             format="json",
         )
 
-        response = officer_client.get(reverse("phishing-attempts-list"))
+        response = admin_client.get(reverse("phishing-attempts-list"))
 
         assert response.json()["count"] == 1

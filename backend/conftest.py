@@ -5,7 +5,6 @@ from django.core.cache import cache
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from apps.alerts.models import SecurityAlert
 from apps.incidents.models import IncidentCategory
 from apps.phishing.models import PhishingSimulation
 from apps.quizzes.models import AnswerOption, Question, Quiz
@@ -37,7 +36,6 @@ def _reset_throttle_cache():
 def roles(db):
     return {
         "normal_user": Role.objects.create(code=Role.NORMAL_USER, name="Normal User"),
-        "cybersecurity_officer": Role.objects.create(code=Role.CYBERSECURITY_OFFICER, name="Cybersecurity Officer"),
         "system_admin": Role.objects.create(code=Role.SYSTEM_ADMIN, name="System Administrator"),
     }
 
@@ -65,11 +63,6 @@ def other_normal_user(roles):
 
 
 @pytest.fixture
-def officer_user(roles):
-    return _make_user(roles, "cybersecurity_officer", "officer@cybershield.local")
-
-
-@pytest.fixture
 def admin_user(roles):
     return _make_user(roles, "system_admin", "admin@cybershield.local", is_staff=True)
 
@@ -93,11 +86,6 @@ def _auth_client(user):
 @pytest.fixture
 def user_client(normal_user):
     return _auth_client(normal_user)
-
-
-@pytest.fixture
-def officer_client(officer_user):
-    return _auth_client(officer_user)
 
 
 @pytest.fixture
@@ -161,14 +149,3 @@ def phishing_simulation(db):
 def incident_category(db):
     return IncidentCategory.objects.create(name="Phishing", slug="phishing", default_severity="medium")
 
-
-@pytest.fixture
-def security_alert(db, admin_user):
-    return SecurityAlert.objects.create(
-        title="New phishing campaign",
-        body="Be cautious of emails referencing invoices.",
-        priority=SecurityAlert.HIGH,
-        alert_type=SecurityAlert.THREAT_ADVISORY,
-        starts_at=timezone.now() - timedelta(minutes=5),
-        created_by=admin_user,
-    )

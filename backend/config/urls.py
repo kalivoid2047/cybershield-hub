@@ -16,7 +16,6 @@ api_v1 = [
     path("quizzes/", include("apps.quizzes.urls")),
     path("phishing/", include("apps.phishing.urls")),
     path("incidents/", include("apps.incidents.urls")),
-    path("alerts/", include("apps.alerts.urls")),
     path("analytics/", include("apps.analytics.urls")),
     path("audit/", include("apps.audit.urls")),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),

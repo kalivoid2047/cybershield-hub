@@ -1,7 +1,6 @@
 import {
   Activity,
   BarChart3,
-  Bell,
   BookOpen,
   BrainCircuit,
   ClipboardList,
@@ -13,7 +12,7 @@ import {
   Users,
 } from "lucide-react";
 
-const STAFF = ["cybersecurity_officer", "system_admin"];
+const STAFF = ["system_admin"];
 
 // Grouped so the sidebar reads as "learn / respond / administer" rather than
 // one flat list of eleven links.
@@ -35,7 +34,6 @@ export const navGroups = [
     items: [
       { label: "Incidents", to: "/incidents", icon: ClipboardList },
       { label: "SOC queue", to: "/soc", icon: Activity, roles: STAFF },
-      { label: "Alerts", to: "/alerts", icon: Bell, badge: "alerts" },
     ],
   },
   {
@@ -59,7 +57,6 @@ const sections = [
   ["/phishing", "Phishing lab"],
   ["/soc", "SOC queue"],
   ["/analytics", "Analytics"],
-  ["/alerts", "Alerts"],
   ["/admin/content", "Content"],
   ["/admin/users", "Users"],
   ["/admin/quizzes", "Quiz settings"],

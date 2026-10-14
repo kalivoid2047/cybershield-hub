@@ -5,7 +5,7 @@ from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 
-from apps.common.permissions import IsAdminOrReadOnly, IsCyberOfficer, IsOwnerOrOfficer
+from apps.common.permissions import IsAdminOrReadOnly, IsSystemAdmin, IsOwnerOrAdmin
 from apps.common.responses import ok
 from apps.incidents.models import Incident, IncidentAssignment, IncidentCategory, IncidentUpdate
 from apps.incidents.serializers import (
@@ -31,7 +31,7 @@ class IncidentCategoryViewSet(viewsets.ModelViewSet):
 
 class IncidentViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
-    permission_classes = [IsOwnerOrOfficer]
+    permission_classes = [IsOwnerOrAdmin]
     filterset_fields = ["status", "severity", "category", "assigned_to", "is_draft"]
     search_fields = ["reference_number", "title", "description", "affected_system", "reporter__email", "assigned_to__email"]
     ordering_fields = ["created_at", "updated_at", "priority_score", "occurred_at"]
@@ -40,7 +40,7 @@ class IncidentViewSet(viewsets.ModelViewSet):
         qs = Incident.objects.select_related("category", "reporter", "reporter__role", "assigned_to", "assigned_to__role").prefetch_related(
             "attachments", "updates", "updates__actor"
         ).annotate(attachment_count=Count("attachments")).order_by("-created_at", "-id")
-        if self.request.user.role_code in {Role.SYSTEM_ADMIN, Role.CYBERSECURITY_OFFICER}:
+        if self.request.user.role_code in {Role.SYSTEM_ADMIN}:
             return qs
         return qs.filter(reporter=self.request.user)
 
@@ -53,7 +53,7 @@ class IncidentViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in {"assign", "transition", "queue", "heatmap"}:
-            return [IsCyberOfficer()]
+            return [IsSystemAdmin()]
         if self.action == "create":
             return [permissions.IsAuthenticated()]
         return super().get_permissions()
@@ -74,7 +74,7 @@ class IncidentViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         officer = User.objects.filter(
             id=serializer.validated_data["officer_id"],
-            role__code__in=[Role.CYBERSECURITY_OFFICER, Role.SYSTEM_ADMIN],
+            role__code=Role.SYSTEM_ADMIN,
             is_active=True,
         ).first()
         if not officer:
@@ -139,18 +139,18 @@ class IncidentViewSet(viewsets.ModelViewSet):
 
 class IncidentUpdateViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IncidentUpdateSerializer
-    permission_classes = [IsOwnerOrOfficer]
+    permission_classes = [IsOwnerOrAdmin]
 
     def get_queryset(self):
         qs = IncidentUpdate.objects.select_related("incident", "actor")
-        if self.request.user.role_code in {Role.SYSTEM_ADMIN, Role.CYBERSECURITY_OFFICER}:
+        if self.request.user.role_code in {Role.SYSTEM_ADMIN}:
             return qs
         return qs.filter(incident__reporter=self.request.user, is_internal=False)
 
 
 class IncidentAssignmentViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IncidentAssignmentSerializer
-    permission_classes = [IsCyberOfficer]
+    permission_classes = [IsSystemAdmin]
     filterset_fields = ["assigned_to", "incident"]
 
     def get_queryset(self):

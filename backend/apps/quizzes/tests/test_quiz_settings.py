@@ -52,9 +52,6 @@ class TestEditingMaxAttempts:
         quiz.refresh_from_db()
         assert quiz.max_attempts == 0
 
-    def test_officer_cannot_change_limit(self, officer_client, quiz):
-        assert _patch(officer_client, quiz, {"max_attempts": 5}).status_code == 403
-
     def test_anonymous_cannot_change_limit(self, api_client, quiz):
         assert _patch(api_client, quiz, {"max_attempts": 5}).status_code == 401
 

@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 
-import '../state/alerts_state.dart';
 import '../theme.dart';
 import '../widgets/glass.dart';
 import 'account_screen.dart';
-import 'alerts_screen.dart';
 import 'dashboard_screen.dart';
 import 'incidents_screens.dart';
 import 'learn_screen.dart';
 
-/// Signed-in frame: a floating glass navigation bar over the five main areas.
+/// Signed-in frame: a floating glass navigation bar over the four main areas.
 class Shell extends StatefulWidget {
   const Shell({super.key});
 
@@ -22,31 +19,20 @@ class Shell extends StatefulWidget {
 class _ShellState extends State<Shell> {
   int _index = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => context.read<AlertsState>().load(),
-    );
-  }
-
   void _go(int index) => setState(() => _index = index);
 
   @override
   Widget build(BuildContext context) {
-    final unread = context.select<AlertsState, int>((s) => s.unread);
     final pages = <Widget>[
       DashboardScreen(onOpenTab: _go),
       const LearnScreen(),
       const IncidentsScreen(),
-      const AlertsScreen(),
       const AccountScreen(),
     ];
     const items = [
       (Icons.space_dashboard_outlined, Icons.space_dashboard, 'Home'),
       (Icons.school_outlined, Icons.school, 'Learn'),
       (Icons.report_gmailerrorred_outlined, Icons.report, 'Incidents'),
-      (Icons.notifications_outlined, Icons.notifications, 'Alerts'),
       (Icons.person_outline, Icons.person, 'Account'),
     ];
 
@@ -74,7 +60,7 @@ class _ShellState extends State<Shell> {
                       selectedIcon: items[i].$2,
                       label: items[i].$3,
                       selected: i == _index,
-                      badge: items[i].$3 == 'Alerts' ? unread : 0,
+                      badge: 0,
                       onTap: () {
                         HapticFeedback.selectionClick();
                         _go(i);

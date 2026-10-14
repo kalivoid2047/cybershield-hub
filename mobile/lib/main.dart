@@ -6,7 +6,6 @@ import 'api/api_client.dart';
 import 'api/cybershield_api.dart';
 import 'screens/auth_screens.dart';
 import 'screens/shell.dart';
-import 'state/alerts_state.dart';
 import 'state/auth_state.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
@@ -49,7 +48,6 @@ class CyberShieldApp extends StatelessWidget {
         Provider<ApiClient>.value(value: client),
         Provider<CyberShieldApi>.value(value: api),
         ChangeNotifierProvider<AuthState>.value(value: auth),
-        ChangeNotifierProvider<AlertsState>(create: (_) => AlertsState(api)),
       ],
       child: MaterialApp(
         title: 'CyberShield Hub',

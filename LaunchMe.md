@@ -77,7 +77,6 @@ Open http://localhost:5173. The Vite dev server proxies `/api` to the backend on
 | Email | Password | Role |
 | --- | --- | --- |
 | `admin@cybershield.local` | `CyberShield123!` | System administrator |
-| `officer@cybershield.local` | `CyberShield123!` | Cybersecurity officer |
 | `user@cybershield.local` | `CyberShield123!` | Normal user |
 
 These exist only if you ran `seed_demo` in step 4. Change or remove them before any real deployment.
