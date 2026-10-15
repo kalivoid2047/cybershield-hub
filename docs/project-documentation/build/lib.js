@@ -98,7 +98,7 @@ function cover(chapterNo, title) {
     centred("KWEKWE POLYTECHNIC", 36, { bold: true, color: NAVY, after: 80 }),
     centred("National Diploma in Information Technology (ND3 IT)", 24, { after: 40 }),
     centred("Project Documentation", 24, { after: 600 }),
-    centred(`CHAPTER ${chapterNo}`, 28, { bold: true, color: "888888", after: 80 }),
+    centred(chapterNo === 8 ? "APPENDICES" : `CHAPTER ${chapterNo}`, 28, { bold: true, color: "888888", after: 80 }),
     centred(title, 44, { bold: true, color: NAVY, caps: true, after: 600 }),
     centred("CyberShield Hub", 36, { bold: true, after: 80 }),
     centred("A Cybersecurity Awareness and Incident Response Platform", 24, { after: 700 }),
@@ -137,9 +137,9 @@ const registry = [];
 // Writes one chapter file and remembers it for the combined document.
 async function build(file, chapterNo, title, children) {
   registry.push({ chapterNo, title, children });
-  const doc = new Document({ ...docOptions(), title: `Chapter ${chapterNo}: ${title}`,
-    sections: [{ properties: pageProps, ...headerFooter(`CyberShield Hub — Chapter ${chapterNo}: ${title}`),
-      children: [...cover(chapterNo, title), ...children.flat(), ...signoff()] }] });
+  const doc = new Document({ ...docOptions(), title: chapterNo === 8 ? title : `Chapter ${chapterNo}: ${title}`,
+    sections: [{ properties: pageProps, ...headerFooter(chapterNo === 8 ? `CyberShield Hub — ${title}` : `CyberShield Hub — Chapter ${chapterNo}: ${title}`),
+      children: [...cover(chapterNo, title), ...children.flat(), ...(chapterNo === 8 ? [] : signoff())] }] });
   fs.writeFileSync(OUT + file, await Packer.toBuffer(doc));
   console.log("wrote", file);
 }
@@ -156,17 +156,12 @@ async function buildCombined(file, front) {
     ...front.flat(), brk(),
     new Paragraph({ children: [new TextRun({ text: "Contents", bold: true, size: 32, color: NAVY })], spacing: { after: 200 } }),
     new D.TableOfContents("Contents", { hyperlink: true, headingStyleRange: "1-2" }),
-    new Paragraph({ pageBreakBefore: true, children: [new TextRun({ text: "List of Figures", bold: true, size: 32, color: NAVY })], spacing: { after: 200 } }),
-    ...lines(figureList),
-    gap(),
-    new Paragraph({ children: [new TextRun({ text: "List of Tables", bold: true, size: 32, color: NAVY })], spacing: { before: 300, after: 200 } }),
-    ...lines(tableList),
   ];
   const body = [];
   [...registry].sort((a, b) => a.chapterNo - b.chapterNo).forEach((ch) => {
     body.push(new Paragraph({ heading: HeadingLevel.HEADING_1, pageBreakBefore: true, spacing: { after: 300 },
-      children: [new TextRun({ text: `Chapter ${ch.chapterNo}: ${ch.title}`, size: 40 })] }));
-    body.push(...ch.children.flat(), ...signoff());
+      children: [new TextRun({ text: ch.chapterNo === 8 ? ch.title : `Chapter ${ch.chapterNo}: ${ch.title}`, size: 40 })] }));
+    body.push(...ch.children.flat(), ...(ch.chapterNo === 8 ? [] : signoff()));
   });
   const doc = new Document({ ...docOptions(), title: "CyberShield Hub: Project Documentation", features: { updateFields: true },
     sections: [{ properties: pageProps, ...headerFooter("CyberShield Hub — Project Documentation"), children: [...frontMatter, ...body] }] });

@@ -1,0 +1,218 @@
+const { chapter, P, H1, H2, H3, B, N, code, gap, brk, table, img, shot, build } = require("./lib");
+const fs = require("fs");
+const path = require("path");
+
+const TESTS = { total: 335 };
+const live = JSON.parse(fs.readFileSync(path.join(__dirname, "verify_results.json"), "utf8"));
+
+module.exports = (async () => {
+// ======================= CHAPTER 6 =======================
+chapter(6);
+await build("Chapter_6_Implementation_and_Post_Implementation_Plan.docx", 6, "Implementation and Post-Implementation Plan", [
+  H1("6.1 Introduction"),
+  P("This chapter describes how CyberShield Hub is put into use in an organisation and how it is supported afterwards. It has the pre-presentation, the documentation with the user manual, the conversion and training plans, and the post-implementation plan."),
+
+  H1("6.2 Pre-Presentation"),
+  H2("6.2.1 Presentation outline (15 minutes)"),
+  ...table(["Part", "Content", "Minutes"], [
+    ["1. Title and problem", "Human error and informal incident handling", "2"],
+    ["2. Objectives and scope", "The five objectives and what is in and out of scope", "2"],
+    ["3. Solution overview", "The architecture diagram and the three roles", "2"],
+    ["4. Live demonstration", "The script in 6.2.2", "6"],
+    ["5. Proof", `${TESTS.total} automatic tests and ${live.length} live flow checks pass`, "1"],
+    ["6. Implementation and benefits", "Conversion plan, training and benefits", "1"],
+    ["7. Conclusion and questions", "Summary and questions", "1"],
+  ], [2600, 5426, 1000], "Presentation outline"),
+  H2("6.2.2 Demonstration script"),
+  N("Log in as a normal user. Show the dashboard.", "num2"),
+  N("Open a lesson and bookmark it. Take its quiz and show the result and tips.", "num2"),
+  N("Open the phishing lab, check a link, choose red flags and show the feedback.", "num2"),
+  N("Report an incident with an evidence file. Show the reference number.", "num2"),
+  N("Log in as an administrator. Open the SOC queue, assign the incident, move it to Investigating and add a note.", "num2"),
+  N("Go back to the reporter and show the new timeline entry.", "num2"),
+  N("Log in as an administrator. Manage a user. Edit a lesson. Show the audit log and the CSV export.", "num2"),
+  H2("6.2.3 Preparation checklist"),
+  B("Start the server with demo data: `python manage.py migrate`, `python manage.py seed_demo`, `python manage.py runserver` (see `LaunchMe.md`)."),
+  B("Start the web app with `npm run dev`."),
+  B("Keep two browser profiles open: user and administrator."),
+  B("Keep two sample evidence files on the desktop: a screenshot and a PDF."),
+
+  H1("6.3 Documentation"),
+  ...table(["Document", "Reader", "Place"], [
+    ["Project chapters 1 to 7, appendices and the combined document", "Supervisor, examiners", "`docs/project-documentation/`"],
+    ["README and LaunchMe (install and run guide)", "Administrators, developers", "`README.md`, `LaunchMe.md`"],
+    ["Architecture notes", "Developers", "`docs/architecture.md`"],
+    ["API map and API documentation page", "Developers", "`docs/api_endpoints.md`, `/api/v1/docs/`"],
+    ["Database schema", "Database administrators", "`docs/database_schema.sql`"],
+    ["User manual", "Users and administrators", "Section 6.3.1"],
+    ["Administrator guide", "System administrators", "Section 6.3.2"],
+  ], [3600, 2800, 2626], "Project documents"),
+
+  H2("6.3.1 User manual"),
+  H3("A. Getting started (all users)"),
+  N("Open the CyberShield Hub address in your browser.", "num3"),
+  N("Choose **Create account**. Enter your name, e-mail and a password of at least 10 characters. Submit the form.", "num3"),
+  N("Sign in with your e-mail and password. To reset a forgotten password, choose **Reset password** and follow the link.", "num3"),
+  N("The **Dashboard** shows your security score, learning progress, quiz and phishing results and incidents.", "num3"),
+  N("Use **Account** to change your profile or password. Choose **Sign out** when you finish.", "num3"),
+  H3("B. Learn"),
+  ...table(["Task", "Steps"], [
+    ["Find a lesson", "Training. Type in the search box or filter by category and difficulty. Select a card."],
+    ["Read a lesson", "Open the lesson. Your progress is saved. Choose **Mark complete** at the end."],
+    ["Bookmark a lesson", "Select the bookmark icon on the lesson."],
+    ["Take a quiz", "Quizzes. Choose a quiz and check the attempts left. Start, answer every question before the timer ends, then submit."],
+    ["Read your result", "The result page shows your score, pass or fail, the correct answers with reasons, and lessons for your weak topics."],
+    ["Practise phishing detection", "Phishing lab. Open a message, check the sender and links, tick the red flags, choose Safe or Suspicious, then read the feedback."],
+  ], [2400, 6626], "User manual: learning"),
+  H3("C. Report and follow an incident"),
+  N("Open **Incidents**, then **Report incident**.", "num4"),
+  N("Write a clear title. Give the affected system, category, severity, the time it happened and a description.", "num4"),
+  N("Attach evidence such as screenshots, e-mails or logs. Allowed types: png, jpg, jpeg, pdf, txt, log, eml, msg. Each file is up to 10 MB.", "num4"),
+  N("Choose **Save draft** to finish later, or **Submit**. Write down the reference number (INC-date-code).", "num4"),
+  N("Open **Incidents** and select an incident to see its status and timeline.", "num4"),
+  H3("D. Administrator tasks"),
+  ...table(["Task", "Steps"], [
+    ["Review the queue", "SOC queue. Incidents are in columns by status, highest priority first. The heat map compares severity with status."],
+    ["Assign an incident", "Open the incident. In the manage panel choose an administrator and select Assign."],
+    ["Change status", "In the manage panel choose the new status (Investigating, Escalated, Resolved or Closed) and write a note. The timeline updates."],
+    ["View analytics", "Analytics. Read the training, quiz, phishing, incident and risk charts."],
+    ["Check the audit log", "Audit log. Filter or search, then choose Export."],
+    ["Manage users", "Users. Activate or deactivate an account, change a role or unlock sign-in."],
+    ["Manage content", "Content library. Choose Lessons, Quizzes, Phishing or Categories. Select New or Edit, then Save."],
+    ["Set quiz rules", "Quiz settings. Set the pass score, time limit, attempts and question order."],
+  ], [2400, 6626], "User manual: administrators"),
+  H3("E. Troubleshooting"),
+  ...table(["Problem", "Action"], [
+    ["Cannot log in", "Check the e-mail and password. After many wrong tries, wait one minute. An administrator unlocks a deactivated account."],
+    ["The session ended", "Sign in again."],
+    ["A file is refused", "Check the type (png, jpg, jpeg, pdf, txt, log, eml, msg) and the size (under 10 MB)."],
+    ["Quiz shows no attempts left", "An administrator raises the attempt limit in Quiz settings."],
+  ], [2600, 6426], "User manual: troubleshooting"),
+
+  H2("6.3.2 Administrator guide (installation)"),
+  N("Install Python 3.12 or newer and Node.js 20 or newer.", "num5"),
+  N("Copy `.env.example` to `.env`. Set `DJANGO_SECRET_KEY`, `DJANGO_DEBUG=False`, `DJANGO_ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS` and the database settings (`DB_ENGINE=mysql` for MySQL).", "num5"),
+  N("In `backend/`: make a virtual environment, run `pip install -r requirements.txt` and `python manage.py migrate`. Make the first administrator with `python manage.py createsuperuser`.", "num5"),
+  N("Run the API behind a web server with HTTPS. Build the web app with `npm run build` and serve the result.", "num5"),
+  N("Check the health page (`/health/`) and the API documentation page (`/api/v1/docs/`).", "num5"),
+  N("Run `seed_demo` only on a training copy. It creates sample accounts with a known password.", "num5"),
+
+  H1("6.4 Conversion Plans"),
+  H2("6.4.1 Method"),
+  P("The conversion method is a pilot followed by a phased roll-out. The old incident spreadsheet stays in use for the first month. Training and quizzes are new activities, so nothing is replaced. Only incident reporting changes an existing process, and the old spreadsheet is the safety net for it."),
+  H2("6.4.2 Schedule"),
+  ...table(["Stage", "Activities", "Time"], [
+    ["1. Preparation", "Set up the server, HTTPS, administrator accounts. Load lessons, quizzes and simulations.", "1 week"],
+    ["2. Data conversion", "Create staff accounts. Enter open incidents from the spreadsheet through the incident form. Write the original date in the description.", "1 week"],
+    ["3. Pilot", "One department (about 10 users) uses every module. Feedback is collected and problems are fixed.", "2 weeks"],
+    ["4. Roll-out, phase 1", "All staff use training and quizzes.", "2 weeks"],
+    ["5. Roll-out, phase 2", "All staff use the phishing lab and incident reporting. The old spreadsheet continues.", "4 weeks"],
+    ["6. Cut-over", "The spreadsheet is archived. CyberShield Hub is the official record.", "1 day"],
+  ], [2100, 5526, 1400], "Conversion schedule"),
+  H2("6.4.3 Training plan"),
+  ...table(["Group", "Content", "Method", "Time"], [
+    ["All staff", "Register, dashboard, lessons, quizzes, phishing lab, report an incident", "Demonstration and practice; user manual", "1 hour"],
+    ["System administrators", "Install, settings, users and roles, content, SOC queue, assignment, status flow, timeline notes, analytics, audit log", "Technical workshop with practice incidents", "1 day"],
+    ["Management", "Dashboards and what the numbers mean", "Short briefing", "30 minutes"],
+  ], [1900, 3626, 2400, 1100], "Training plan"),
+
+  H1("6.5 Post-Implementation Plan"),
+  ...table(["Activity", "How often", "Who"], [
+    ["Backup of the database and media files; restore test", "Backup daily; restore test every three months", "System administrator"],
+    ["Security updates for Python, Django, Node packages and the operating system", "Monthly", "System administrator"],
+    ["Review of the audit log", "Weekly", "System administrator"],
+    ["New and updated lessons, quizzes and phishing scenarios", "Monthly", "Administrator"],
+    ["Review of objectives, user satisfaction, response times, quiz and phishing results", "3 months and 12 months after start", "Project owner and supervisor"],
+    ["Automatic tests before every change goes live", "Every change", "Developer"],
+  ], [4300, 2500, 2226], "Post-implementation activities"),
+  P("Measures for the review: the share of staff who finish lessons; the average quiz score and pass rate; phishing detection results; the number of incidents reported; the time from report to first assignment and to closure."),
+]);
+
+// ======================= CHAPTER 7 =======================
+chapter(7);
+await build("Chapter_7_Conclusion.docx", 7, "Conclusion", [
+  H1("7.1 Summary"),
+  P("CyberShield Hub replaces informal, separate and unmeasured security awareness and incident handling with one connected system. It has a Django REST API and a React web app. It provides secure login, a training library, a quiz engine, a phishing simulator, incident reporting with evidence, a SOC queue, analytics and an audit trail."),
+  H1("7.2 Achievement of the Objectives"),
+  P("Each objective is shown with its proof from Chapter 5. T numbers are the automatic test cases in section 5.6.3. M numbers are the live flow checks in section 5.6.4."),
+  ...table(["Objective", "Result", "Proof"], [
+    ["O1 Secure login and roles", "Achieved. JWT with refresh rotation and a blacklist; three roles; wrong passwords, deactivated accounts and too many tries are refused; wrong roles are refused.", "T04 to T10; M1b, M8a to M8c, M9, M12"],
+    ["O2 Quiz engine", "Achieved. The server marks the answers, saves the attempt, shows pass or fail and tips, and enforces the attempt limit.", "T19 to T22; M3"],
+    ["O3 Incident reporting", "Achieved. Unique reference numbers, drafts, and checked evidence upload (allowed types, 10 MB).", "T11, T12, T17, T18; M5a, M5b"],
+    ["O4 Incident queue and flow", "Achieved. Queue by status, assignment, status changes and a timeline that the reporter sees.", "T14 to T16; M6a to M6d"],
+    ["O5 Audit log", "Achieved. Signed-in data-changing requests are logged, read-only requests are not, and administrators export the log.", "T24, T25; M10a, M10b"],
+  ], [2300, 4426, 2300], "Achievement of objectives"),
+  H1("7.3 Strengths"),
+  B("One connected system instead of several separate tools."),
+  B("Security built in: roles, token handling, request limits, upload checks and an audit log."),
+  B("One Django app for each area, which keeps the code easy to extend and test."),
+  B("Low cost: open-source tools and a choice of SQLite or MySQL."),
+  H1("7.4 Limitations"),
+  B("Reset and verification e-mails need an SMTP service. No mail server is included."),
+  B("The phishing simulation is an inbox inside the system. It does not send e-mails to real inboxes."),
+  B("Evidence files are stored. They are not scanned for malware."),
+  B("There is no single sign-on and no link to SIEM tools."),
+  H1("7.5 Lessons Learned"),
+  B("Business rules in a service layer are easy to test."),
+  B("Testing alongside development finds defects early. The final live test found that uploaded files were not checked. The fix is in place."),
+  B("Early fact-finding keeps the scope realistic."),
+  H1("7.6 Future Plans"),
+  ...table(["Plan", "Benefit"], [
+    ["Single sign-on and multi-factor login", "Safer and easier login"],
+    ["Real e-mail sending for phishing campaigns with click tracking", "Realistic measure of behaviour"],
+    ["Virus scanning of uploaded evidence", "Safer evidence handling"],
+    ["Link to SIEM and log sources", "Incidents created automatically"],
+    ["Badges, leaderboards and certificates", "More engagement"],
+    ["Response playbooks and time limits for incidents", "Steady and timely response"],
+  ], [5200, 3826], "Future plans"),
+  H1("7.7 Final Remarks"),
+  P("CyberShield Hub is a secure, measurable and easy-to-use security awareness and incident response system built with open-source tools. It joins continuous learning with an accountable response process."),
+  H1("References and Resources"),
+  B("Django Software Foundation. Django documentation. https://docs.djangoproject.com"),
+  B("Encode. Django REST Framework documentation. https://www.django-rest-framework.org"),
+  B("Simple JWT documentation. https://django-rest-framework-simplejwt.readthedocs.io"),
+  B("React documentation. https://react.dev"),
+  B("OWASP. Top Ten Web Application Security Risks. https://owasp.org"),
+  B("Republic of Zimbabwe. Cyber and Data Protection Act, 2021."),
+]);
+
+// ======================= APPENDICES =======================
+chapter("App");
+await build("Appendices_Data_Collection_Methods.docx", 8, "Appendices: Data Collection Methods", [
+  H1("Appendix A: Interview Guide"),
+  P("Asked of the IT manager and department heads."),
+  N("How are new staff taught the information-security rules, and how often is the topic repeated?", "num6"),
+  N("How do you know if a staff member understood the training?", "num6"),
+  N("What happens when a staff member gets a suspicious e-mail? Who do they tell, and how?", "num6"),
+  N("What facts do you need to start an investigation, and how often are they missing?", "num6"),
+  N("How do you record who is working on an incident and what has been done?", "num6"),
+  N("What reports does management ask for, and how long do they take to prepare?", "num6"),
+  N("Who is allowed to see incident reports and staff test results?", "num6"),
+  N("What makes you trust and use a new system?", "num6"),
+  H1("Appendix B: Questionnaire"),
+  ...table(["No.", "Question", "Answer options"], [
+    ["1", "How often have you had information-security training?", "Never / once / every year / more often"],
+    ["2", "Can you recognise a phishing e-mail?", "Yes / not sure / no"],
+    ["3", "Have you ever clicked a link that you later thought was bad?", "Yes / no / not sure"],
+    ["4", "Did you report it? How?", "Phone / e-mail / in person / did not report"],
+    ["5", "Would you use a web system to learn and to report incidents?", "Yes / no / maybe"],
+    ["6", "Which device do you use most at work?", "Desktop / laptop"],
+    ["7", "What stops you from reporting an incident?", "Free text"],
+  ], [700, 5000, 3326], "Questionnaire"),
+  H1("Appendix C: Observation Checklist"),
+  ...table(["Item observed", "Record"], [
+    ["The way the report was made (phone, e-mail, walk-in, chat message)", ""],
+    ["The time between finding the problem and reporting it", ""],
+    ["The facts given at first contact (what, when, which system, evidence)", ""],
+    ["Where the report was written down", ""],
+    ["Whether the reporter was told what happened next", ""],
+  ], [6200, 2826], "Observation checklist"),
+  H1("Appendix D: Document Review List"),
+  ...table(["Document", "What was looked for"], [
+    ["Information security policy", "Rules for passwords, e-mail and reporting"],
+    ["Induction slides", "What new staff are taught about security"],
+    ["Incident e-mails", "Facts given in a report; time to first reply"],
+    ["Spreadsheet incident log", "Fields kept; status and owner of each case"],
+  ], [3200, 5826], "Document review list"),
+]);
+})();

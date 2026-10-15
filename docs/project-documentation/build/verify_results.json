@@ -60,7 +60,7 @@
     "step": "Report an incident with a .pdf file",
     "expected": "Created with reference number",
     "result": "Pass",
-    "note": "INC-20261009-486C07"
+    "note": "INC-20261015-E9BE80"
   },
   {
     "id": "M5b",
@@ -71,21 +71,21 @@
   },
   {
     "id": "M6a",
-    "step": "Officer opens the SOC queue",
+    "step": "Administrator opens the SOC queue",
     "expected": "Incidents grouped by status",
     "result": "Pass",
     "note": "status 200"
   },
   {
     "id": "M6b",
-    "step": "Officer assigns the incident",
+    "step": "Administrator assigns the incident",
     "expected": "Assignment saved",
     "result": "Pass",
     "note": "status 200"
   },
   {
     "id": "M6c",
-    "step": "Officer changes status to Escalated",
+    "step": "Administrator changes status to Escalated",
     "expected": "Timeline entry added",
     "result": "Pass",
     "note": "status 200"
@@ -96,27 +96,6 @@
     "expected": "Status is escalated and timeline has entries",
     "result": "Pass",
     "note": "status escalated, 2 updates"
-  },
-  {
-    "id": "M7a",
-    "step": "Administrator publishes an alert",
-    "expected": "Alert created and users notified",
-    "result": "Pass",
-    "note": "notifications 1 -> 2"
-  },
-  {
-    "id": "M7b",
-    "step": "User marks the notification as read",
-    "expected": "Marked as read",
-    "result": "Pass",
-    "note": "status 200"
-  },
-  {
-    "id": "M7c",
-    "step": "Officer tries to publish an alert",
-    "expected": "Refused (403)",
-    "result": "Pass",
-    "note": "status 403"
   },
   {
     "id": "M8a",
@@ -148,17 +127,17 @@
   },
   {
     "id": "M10a",
-    "step": "Officer opens the audit log",
+    "step": "Administrator opens the audit log",
     "expected": "Entries for the steps above",
     "result": "Pass",
-    "note": "20 entries"
+    "note": "10 entries"
   },
   {
     "id": "M10b",
     "step": "Export the audit log as CSV",
     "expected": "CSV file returned",
     "result": "Pass",
-    "note": "27 rows"
+    "note": "11 rows"
   },
   {
     "id": "M12",

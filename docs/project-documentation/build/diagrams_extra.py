@@ -8,6 +8,7 @@ from matplotlib.patches import FancyBboxPatch, Ellipse, Rectangle, FancyArrowPat
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "diagrams") + os.sep
 NAVY = "#1f3a5f"
+ARRZ = 3
 
 
 def fig(w, h):
@@ -26,7 +27,7 @@ def save(f, name, title):
 
 def arr(a, p, q, t="", off=(0, 1.5), rad=0, ls="-", fs=7, style="-|>"):
     a.add_patch(FancyArrowPatch(p, q, arrowstyle=style, mutation_scale=11, color="#333", lw=1.1,
-                                connectionstyle=f"arc3,rad={rad}", linestyle=ls, zorder=3))
+                                connectionstyle=f"arc3,rad={rad}", linestyle=ls, zorder=ARRZ))
     if t:
         a.text((p[0] + q[0]) / 2 + off[0], (p[1] + q[1]) / 2 + off[1], t, ha="center", va="center", fontsize=fs,
                bbox=dict(fc="white", ec="none", pad=0.6), zorder=5)
@@ -80,8 +81,8 @@ def box(a, x, y, w, h, t, fc="#e8eef7", fs=8, bold=False):
 f, a = plt.subplots(figsize=(11, 5.2))
 tasks = [("Project identification and feasibility", 1, 2, "#1f3a5f"), ("Requirement analysis", 2, 2, "#1f3a5f"),
          ("Design", 3, 2, "#1f3a5f"), ("Back end: login, training, quizzes", 4, 4, "#2e7d32"),
-         ("Back end: phishing, incidents, alerts, audit", 7, 5, "#2e7d32"), ("Web front end", 6, 7, "#2e7d32"),
-         ("Mobile application", 11, 3, "#2e7d32"), ("Testing and fixes", 10, 4, "#c77700"),
+         ("Back end: phishing, incidents, audit", 7, 5, "#2e7d32"), ("Web front end", 6, 7, "#2e7d32"),
+         ("Testing and fixes", 10, 4, "#c77700"),
          ("Documentation and presentation", 13, 2, "#8a1f1f")]
 for i, (n, s, d, c) in enumerate(tasks):
     a.barh(len(tasks) - 1 - i, d, left=s - 1, color=c, height=0.55)
@@ -119,7 +120,7 @@ save(f, "flowchart_login.png", "Figure: Flowchart of the login process")
 f, a = fig(12, 10)
 a.add_patch(Rectangle((2, 3), 36, 90, fc="none", ec="#999", lw=1)); a.text(20, 95, "Reporter", ha="center", fontsize=9, fontweight="bold")
 a.add_patch(Rectangle((40, 3), 38, 90, fc="none", ec="#999", lw=1)); a.text(59, 95, "System", ha="center", fontsize=9, fontweight="bold")
-a.add_patch(Rectangle((80, 3), 38, 90, fc="none", ec="#999", lw=1)); a.text(99, 95, "Officer", ha="center", fontsize=9, fontweight="bold")
+a.add_patch(Rectangle((80, 3), 38, 90, fc="none", ec="#999", lw=1)); a.text(99, 95, "Administrator", ha="center", fontsize=9, fontweight="bold")
 term(a, 20, 88, "Start", w=14)
 step(a, 20, 78, "Fill in incident form", w=26)
 step(a, 20, 68, "Attach evidence files", w=26)
@@ -129,7 +130,7 @@ dec(a, 59, 44, "Valid?", w=20, h=10)
 step(a, 59, 32, "Create incident: reference,\npriority, first timeline entry", w=30, h=8)
 step(a, 20, 32, "See reference number", w=26)
 step(a, 99, 32, "See incident in SOC queue", w=30)
-step(a, 99, 20, "Assign officer; change status;\nadd timeline notes", w=32, h=8)
+step(a, 99, 20, "Assign; change status;\nadd timeline notes", w=32, h=8)
 dec(a, 99, 8, "Resolved?", w=20, h=9)
 term(a, 59, 8, "Write audit log", w=22, h=5)
 arr(a, (20, 85), (20, 81.5)); arr(a, (20, 74.5), (20, 71.5)); arr(a, (20, 64.5), (20, 62))
@@ -190,22 +191,14 @@ dfd2("dfd_level2_phishing.png", "Figure: Level 2 DFD, process 4.0 Phishing simul
      [(44, 8, "D4 Simulations"), (92, 8, "D4b Attempts")],
      [((16, 32), (24, 32), "request"), ((40, 32), (48, 32), "message"), ((64, 32), (72, 32), "choice + flags"), ((88, 32), (96, 32), "score"),
       ((32, 24.5), (40, 10.5), "read", (-6, 0)), ((80, 24.5), (88, 10.5), "save", (-6, 0)), ((104, 24.5), (100, 10.5), "read tip", (6, 0))])
-dfd2("dfd_level2_alerts.png", "Figure: Level 2 DFD, process 6.0 Alerts and notifications", "Administrator",
-     [(32, 32, "6.1\nPublish\nalert"), (56, 32, "6.2\nSend to\naudience"), (80, 32, "6.3\nShow\nnotifications"), (104, 32, "6.4\nMark as\nread")],
-     [(44, 8, "D6 Alerts"), (92, 8, "D6b Notifications")],
-     [((16, 32), (24, 32), "alert text"), ((40, 32), (48, 32), "alert"), ((64, 32), (72, 32), "list"), ((88, 32), (96, 32), "read action"),
-      ((32, 24.5), (40, 10.5), "save", (-6, 0)), ((56, 24.5), (88, 10.5), "one per user", (0, 3)), ((104, 24.5), (100, 10.5), "update", (6, 0))])
-
 # ---------------------------------------------------------------- deployment diagram
 f, a = fig(11, 6)
-box(a, 14, 30, 22, 30, "User devices\n\nWeb browser\n(React app)\n\nAndroid phone\n(Flutter app)", fc="#fff4d6", fs=8.5)
-box(a, 52, 30, 28, 40, "Application server\n\nWeb server (HTTPS)\nDjango + REST API\nJWT, RBAC, audit\nWhiteNoise static files\nmedia/ evidence files", fc="#e6f4ea", fs=8.5)
+box(a, 14, 30, 22, 30, "User computer\n\nWeb browser\n(React app)", fc="#fff4d6", fs=8.5)
+box(a, 52, 30, 28, 40, "Application server\n\nWeb server (HTTPS)\nDjango + REST API\nJWT, RBAC, audit\nmedia/ evidence files", fc="#e6f4ea", fs=8.5)
 box(a, 92, 40, 26, 16, "Database server\n\nSQLite (development)\nMySQL 8 (production)", fc="#f3e5f5", fs=8.5)
-box(a, 92, 14, 26, 14, "Backup storage\n\nDaily database dump\nmedia copy", fc="#eeeeee", fs=8.5)
 box(a, 52, 3, 28, 5, "SMTP service (reset / verify e-mails)", fc="#eeeeee", fs=7.5)
 arr(a, (25, 30), (38, 30), "HTTPS / JSON", off=(0, 3))
 arr(a, (66, 36), (79, 40), "SQL", off=(0, 3))
-arr(a, (66, 24), (79, 16), "backup", off=(0, -3))
 arr(a, (52, 10), (52, 5.8), "")
 save(f, "deployment.png", "Figure: Deployment diagram")
 
@@ -214,7 +207,7 @@ f, a = fig(12, 7)
 box(a, 60, 62, 26, 7, "CyberShield Hub", fc="#fff4d6", bold=True, fs=9)
 mods = [("Accounts", ["Register", "Login / logout", "Password reset", "Roles and users"]), ("Training", ["Categories", "Lessons", "Progress", "Bookmarks"]),
         ("Quizzes", ["Quiz authoring", "Attempts", "Grading", "Weak topics"]), ("Phishing lab", ["Scenarios", "Classify", "Score", "Feedback"]),
-        ("Incidents", ["Report", "Evidence", "Queue / assign", "Timeline"]), ("Alerts", ["Publish", "Notify", "Mark read"]),
+        ("Incidents", ["Report", "Evidence", "Queue / assign", "Timeline"]),
         ("Analytics and audit", ["Dashboards", "Org reports", "Audit log", "CSV export"])]
 xs = [12, 28, 44, 60, 76, 92, 108]
 for x, (m, subs) in zip(xs, mods):
@@ -243,9 +236,9 @@ def flow(a, p, q, label, gap=3.0, lab=5.5, fs=7):
 
 # architecture
 f, a = fig(11, 6)
-box(a, 12, 38, 20, 14, "Users, officers\nand administrators", fc="#fff4d6", fs=8.5)
-box(a, 44, 38, 26, 22, "Clients\n\nReact + Vite web app\nFlutter mobile app", fs=8.5)
-box(a, 88, 38, 36, 30, "Django REST API  (/api/v1)\n\nJWT login and role checks\nBusiness rules (services)\nAudit middleware\nApps: users, training, quizzes,\nphishing, incidents, alerts,\nanalytics, audit", fc="#e6f4ea", fs=8.5)
+box(a, 12, 38, 20, 14, "Users and\nadministrators", fc="#fff4d6", fs=8.5)
+box(a, 44, 38, 26, 22, "Web app\n\nReact + Vite\nruns in the browser", fs=8.5)
+box(a, 88, 38, 36, 30, "Django REST API  (/api/v1)\n\nJWT login and role checks\nBusiness rules (services)\nAudit middleware\nApps: users, training, quizzes,\nphishing, incidents,\nanalytics, audit", fc="#e6f4ea", fs=8.5)
 box(a, 100, 8, 32, 8, "Database: SQLite (development)\nor MySQL 8 (production)", fc="#f3e5f5", fs=7.5)
 box(a, 56, 8, 34, 8, "Evidence file storage (media/)", fc="#f3e5f5", fs=8)
 arr(a, (22, 38), (31, 38))
@@ -255,39 +248,132 @@ arr(a, (78, 23), (66, 12.5), "save files", off=(-1, 3))
 save(f, "architecture.png", "")
 
 # level 0 DFD
-f, a = fig(11, 6)
-proc(a, 62, 30, "0\nCyberShield Hub\nplatform", r=11)
-ent(a, 14, 50, "Normal user", w=20, h=8)
-ent(a, 14, 8, "Cybersecurity\nofficer", w=20, h=8)
-ent(a, 100, 30, "System\nadministrator", w=20, h=8)
-flow(a, (24, 51), (55, 37), "registration, login, quiz answers,\nincident reports, classifications", gap=2.5, lab=5.5)
-flow(a, (55, 37), (24, 51), "lessons, scores, feedback,\nalerts", gap=2.5, lab=5.5)
-flow(a, (24, 7), (55, 23), "status changes, assignments,\nalert publications", gap=2.5, lab=5.5)
-flow(a, (55, 23), (24, 7), "incident queue, analytics,\naudit reports", gap=2.5, lab=5.5)
-flow(a, (90, 30), (74, 30), "user, role and content\nmanagement", gap=2.5, lab=6)
-flow(a, (74, 30), (90, 30), "user lists, logs,\nreports", gap=2.5, lab=6)
+f, a = fig(11, 5)
+proc(a, 62, 25, "0\nCyberShield Hub\nplatform", r=11)
+ent(a, 14, 40, "Normal user", w=20, h=8)
+ent(a, 100, 25, "System\nadministrator", w=20, h=8)
+flow(a, (24, 41), (55, 31), "registration, login, quiz answers,\nincident reports, classifications", gap=2.5, lab=5.5)
+flow(a, (55, 31), (24, 41), "lessons, scores,\nfeedback", gap=2.5, lab=5.5)
+flow(a, (90, 25), (74, 25), "user, role and content management,\nincident handling", gap=2.5, lab=6)
+flow(a, (74, 25), (90, 25), "user lists, incident queue,\nanalytics, audit reports", gap=2.5, lab=6)
 save(f, "dfd_level0.png", "")
 
-# use case diagram (administrators publish alerts; officers handle incidents)
+# level 1 DFD
+f, a = fig(12, 8)
+ent(a, 10, 70, "Normal user", w=16, h=7)
+ent(a, 10, 14, "Administrator", w=16, h=7)
+P = [(40, 72, "1.0\nAuthenticate\nand manage users"), (68, 72, "2.0\nDeliver\ntraining"), (96, 72, "3.0\nRun\nquizzes"),
+     (40, 40, "4.0\nPhishing\nsimulation"), (68, 40, "5.0\nIncident\nresponse")]
+for x, y, t in P:
+    proc(a, x, y, t, r=8)
+S = [(40, 56, "D1 Users / Roles"), (68, 56, "D2 Lessons / Progress"), (96, 56, "D3 Quizzes / Attempts"),
+     (40, 24, "D4 Phishing"), (68, 24, "D5 Incidents")]
+for x, y, t in S:
+    store(a, x, y, t)
+for (x, y, _), (sx, sy, _) in zip(P, S):
+    arr(a, (x, y - 7), (sx, sy + 2.3))
+arr(a, (18, 71), (31, 72), "credentials, requests", off=(0, 3))
+arr(a, (14, 66), (34, 44), "answers, reports,\nclassifications", off=(-1, 5), ls=":")
+arr(a, (18, 14), (60, 36), "assignment,\nstatus", off=(-20, 8), ls=":")
+proc(a, 68, 8, "7.0 Analytics\nand audit", r=8)
+store(a, 108, 8, "D7 Audit log", w=14)
+arr(a, (76, 8), (101, 8), "request log", off=(0, 2))
+arr(a, (18, 12), (60, 8), "filters, exports", off=(0, -2.5))
+save(f, "dfd_level1.png", "")
+
+# level 2 DFD: incident response
+f, a = fig(12, 6)
+ent(a, 8, 45, "Reporter", w=14, h=7)
+ent(a, 8, 10, "Administrator", w=14, h=7)
+P = [(32, 45, "5.1\nCapture\nreport"), (56, 45, "5.2\nValidate\nevidence"), (80, 45, "5.3\nPrioritise and\nreference"),
+     (56, 10, "5.4\nAssign"), (84, 10, "5.5\nUpdate status\nand timeline")]
+for x, y, t in P:
+    proc(a, x, y, t, r=8)
+store(a, 80, 27, "D5 Incidents")
+store(a, 56, 27, "D5a Attachments")
+store(a, 108, 27, "D5b Updates / Assignments")
+arr(a, (15, 45), (23, 45), "report details", off=(0, 3))
+arr(a, (41, 45), (48, 45), "files")
+arr(a, (65, 45), (72, 45), "valid report")
+arr(a, (80, 37), (80, 29.5), "reference, score", off=(9, 0))
+arr(a, (56, 37), (56, 29.5))
+arr(a, (15, 10), (48, 10), "assignee choice", off=(0, 2.5))
+arr(a, (65, 10), (75, 10), "assignment")
+arr(a, (93, 14), (108, 25), "timeline entry", off=(-2, 0))
+arr(a, (80, 24.5), (84, 17), "status", off=(7, 0))
+arr(a, (24, 38), (15, 15), "status feedback", off=(2, 0), ls=":")
+save(f, "dfd_level2_incident.png", "")
+
+# use case diagram
 f, a = fig(12, 8)
 a.add_patch(Rectangle((32, 3), 62, 72, fc="none", ec=NAVY, lw=1.5))
 a.text(63, 77, "CyberShield Hub", ha="center", fontsize=10, fontweight="bold")
-ent(a, 12, 52, "Normal user", w=18, h=7)
-ent(a, 12, 16, "Cybersecurity officer", w=18, h=8)
-ent(a, 109, 30, "System administrator", w=22, h=8)
+ent(a, 12, 50, "Normal user", w=18, h=7)
+ent(a, 109, 36, "System administrator", w=22, h=8)
 UC = {"reg": (48, 68, "Register / log in"), "les": (48, 58, "Study lessons"), "quiz": (48, 48, "Take quiz"), "ph": (48, 38, "Run phishing simulation"),
-      "rep": (48, 28, "Report incident"), "al": (48, 18, "Read alerts"),
+      "rep": (48, 28, "Report incident"),
       "soc": (79, 68, "Manage SOC queue"), "asg": (79, 58, "Assign and update incidents"), "ana": (79, 48, "View organisation analytics"),
-      "aud": (79, 38, "Review audit log"), "pub": (79, 28, "Publish alerts"), "adm": (79, 18, "Manage users, roles, content")}
+      "aud": (79, 38, "Review audit log"), "adm": (79, 28, "Manage users, roles, content")}
 for k, (x, y, t) in UC.items():
     a.add_patch(Ellipse((x, y), 27, 7, fc="#fff4d6", ec="#8a6d00", zorder=2))
     a.text(x, y, t, ha="center", va="center", fontsize=7.5, zorder=4)
-for k in ["reg", "les", "quiz", "ph", "rep", "al"]:
-    arr(a, (21, 52), (UC[k][0] - 13.5, UC[k][1]), style="-")
-for k in ["soc", "asg", "ana", "aud"]:
-    arr(a, (21, 17), (UC[k][0] - 13.5, UC[k][1]), style="-")
-for k in ["pub", "adm", "aud", "ana", "soc", "asg"]:
-    arr(a, (98, 30), (UC[k][0] + 13.5, UC[k][1]), style="-")
-a.text(4, 7, "Officers can also do everything a normal user can do. Administrators can also do everything an officer can do.", fontsize=6.5, ha="left", va="center")
+for k in ["reg", "les", "quiz", "ph", "rep"]:
+    arr(a, (21, 50), (UC[k][0] - 13.5, UC[k][1]), style="-")
+for k in UC:
+    arr(a, (98, 36), (UC[k][0] + 13.5, UC[k][1]), style="-")
+a.text(4, 7, "Administrators can also do everything a normal user can do.", fontsize=6.5, ha="left", va="center")
 save(f, "use_case.png", "")
+
+# sequence diagram
+f, a = fig(12, 7)
+names = ["Reporter", "Web app", "Django API", "Database", "Administrator"]
+xs = [10, 35, 60, 85, 110]
+for x, n in zip(xs, names):
+    box(a, x, 62, 18, 5, n, bold=True)
+    a.plot([x, x], [3, 58], color="#888", ls="--", lw=1)
+steps = [(0, 1, 54, "1 fill incident form + evidence"), (1, 2, 48, "2 POST /incidents/incidents/ (Bearer token)"),
+         (2, 3, 42, "3 check token, role, file type and size; save"), (3, 2, 36, "4 saved incident (INC-date-xxxxxx)"),
+         (2, 1, 30, "5 201 Created + reference number"), (1, 0, 24, "6 show confirmation"),
+         (4, 2, 18, "7 POST /assign/ then /transition/"), (2, 3, 12, "8 write assignment, timeline, audit log"),
+         (2, 1, 6, "9 new status shown to the reporter")]
+for s_, t_, y, l in steps:
+    arr(a, (xs[s_], y), (xs[t_], y), l, off=(0, 2), fs=7)
+save(f, "sequence_incident.png", "")
 print("core redraws done")
+
+
+# ---------------------------------------------------------------- entity relationship diagram
+ARRZ = 0
+f, a = fig(12, 8)
+T = {}
+
+
+def tb(k, x, y, n, cols, w=22):
+    h = 4 + 2.8 * len(cols)
+    a.add_patch(Rectangle((x - w / 2, y - h / 2), w, h, fc="white", ec=NAVY, lw=1.3, zorder=2))
+    a.add_patch(Rectangle((x - w / 2, y + h / 2 - 3.5), w, 3.5, fc=NAVY, zorder=3))
+    a.text(x, y + h / 2 - 1.8, n, color="white", ha="center", va="center", fontsize=7.5, fontweight="bold", zorder=4)
+    for i, c in enumerate(cols):
+        a.text(x - w / 2 + 1, y + h / 2 - 5.5 - 2.8 * i, c, fontsize=6.5, va="center", zorder=4)
+    T[k] = (x, y)
+
+
+tb("roles", 12, 70, "roles", ["PK id", "code UNIQUE", "name", "permissions"])
+tb("users", 12, 44, "users", ["PK id", "email UNIQUE", "FK role_id", "security_score", "is_deactivated"])
+tb("lc", 42, 71, "lesson_categories", ["PK id", "name, slug", "order"])
+tb("lessons", 42, 52, "lessons", ["PK id", "FK category_id", "FK created_by_id", "slug, difficulty"])
+tb("lp", 42, 29, "lesson_progress / bookmarks", ["PK id", "FK user_id", "FK lesson_id", "percent, completed"], w=26)
+tb("quizzes", 74, 71, "quizzes", ["PK id", "FK lesson_id", "FK category_id", "pass_score, max_attempts"])
+tb("q", 74, 52, "questions / answers", ["PK id", "FK quiz_id", "is_correct", "points"])
+tb("qa", 74, 29, "quiz_attempts", ["PK id", "FK user_id", "FK quiz_id", "score, passed"])
+tb("ph", 106, 71, "phishing_simulations", ["PK id", "FK created_by_id", "is_phishing", "red_flags JSON"], w=24)
+tb("pa", 106, 50, "phishing_attempts", ["PK id", "FK user_id", "FK simulation_id", "score"], w=24)
+tb("inc", 30, 10, "incidents", ["PK id", "reference_number UNIQUE", "FK category_id", "FK reporter_id, assigned_to_id", "severity, status"], w=32)
+tb("iu", 72, 10, "incident_updates / assignments / attachments", ["PK id", "FK incident_id", "FK actor_id"], w=38)
+tb("au", 106, 28, "audit_logs", ["PK id", "FK actor_id", "action, path"])
+for k1, k2 in [("users", "roles"), ("lessons", "lc"), ("lp", "lessons"), ("lp", "users"), ("q", "quizzes"), ("qa", "quizzes"),
+               ("qa", "users"), ("pa", "ph"), ("pa", "users"), ("inc", "users"), ("iu", "inc"), ("au", "users"),
+               ("quizzes", "lessons")]:
+    arr(a, T[k1], T[k2], style="-")
+save(f, "erd.png", "")
+print("erd done")

@@ -27,10 +27,8 @@ const data = (r) => (r.json && r.json.data !== undefined ? r.json.data : r.json)
   const user = data(r);
   rec("M1b", "Log in with the new account", "Tokens returned; role is normal user", r.status === 200 && user.access && user.user.role.code === "normal_user", `role ${user.user && user.user.role && user.user.role.code}`);
   const U = user.access;
-  r = await call("POST", "/auth/login/", null, { email: "officer@cybershield.local", password: PASSWORD });
-  const O = data(r).access; const officerId = data(r).user.id;
   r = await call("POST", "/auth/login/", null, { email: "admin@cybershield.local", password: PASSWORD });
-  const A = data(r).access;
+  const A = data(r).access; const adminId = data(r).user.id;
 
   // M2 lesson progress + bookmark
   r = await call("GET", "/training/lessons/?page_size=100", U);
@@ -75,29 +73,16 @@ const data = (r) => (r.json && r.json.data !== undefined ? r.json.data : r.json)
   r = await call("POST", "/incidents/incidents/", U, null, mk("virus.exe", "application/octet-stream", "MZ"));
   rec("M5b", "Report an incident with a .exe file", "Rejected with a message", r.status === 400, `status ${r.status}`);
 
-  // M6 officer workflow
-  r = await call("GET", "/incidents/incidents/queue/", O);
-  rec("M6a", "Officer opens the SOC queue", "Incidents grouped by status", r.status === 200, `status ${r.status}`);
-  r = await call("POST", `/incidents/incidents/${inc.id}/assign/`, O, { officer_id: officerId, note: "Please investigate" });
-  rec("M6b", "Officer assigns the incident", "Assignment saved", r.status === 200, `status ${r.status}`);
-  r = await call("POST", `/incidents/incidents/${inc.id}/transition/`, O, { status: "escalated", note: "Escalated for review", is_internal: false });
-  rec("M6c", "Officer changes status to Escalated", "Timeline entry added", r.status === 200, `status ${r.status}`);
+  // M6 administrator workflow
+  r = await call("GET", "/incidents/incidents/queue/", A);
+  rec("M6a", "Administrator opens the SOC queue", "Incidents grouped by status", r.status === 200, `status ${r.status}`);
+  r = await call("POST", `/incidents/incidents/${inc.id}/assign/`, A, { officer_id: adminId, note: "Please investigate" });
+  rec("M6b", "Administrator assigns the incident", "Assignment saved", r.status === 200, `status ${r.status}`);
+  r = await call("POST", `/incidents/incidents/${inc.id}/transition/`, A, { status: "escalated", note: "Escalated for review", is_internal: false });
+  rec("M6c", "Administrator changes status to Escalated", "Timeline entry added", r.status === 200, `status ${r.status}`);
   r = await call("GET", `/incidents/incidents/${inc.id}/`, U);
   const d2 = data(r);
   rec("M6d", "Reporter sees the new status and timeline", "Status is escalated and timeline has entries", r.status === 200 && d2.status === "escalated" && (d2.updates || []).length >= 2, `status ${d2.status}, ${(d2.updates || []).length} updates`);
-
-  // M7 alert
-  r = await call("GET", "/alerts/notifications/", U);
-  const before = items(r).length;
-  r = await call("POST", "/alerts/alerts/", A, { title: "Fake invoice e-mails", body: "Do not open invoices you did not expect.", priority: "high", alert_type: "threat_advisory", audience_role: "", starts_at: new Date(Date.now() - 60e3).toISOString(), is_active: true });
-  const alertStatus = r.status;
-  r = await call("GET", "/alerts/notifications/", U);
-  rec("M7a", "Administrator publishes an alert", "Alert created and users notified", alertStatus === 201 && items(r).length === before + 1, `notifications ${before} -> ${items(r).length}`);
-  const note = items(r)[0];
-  r = await call("POST", `/alerts/notifications/${note.id}/read/`, U);
-  rec("M7b", "User marks the notification as read", "Marked as read", r.status === 200, `status ${r.status}`);
-  r = await call("POST", "/alerts/alerts/", O, { title: "Officer try", body: "x", priority: "low", alert_type: "threat_advisory", starts_at: new Date().toISOString() });
-  rec("M7c", "Officer tries to publish an alert", "Refused (403)", r.status === 403, `status ${r.status}`);
 
   // M8 access control
   r = await call("GET", "/incidents/incidents/queue/", U);
@@ -116,10 +101,10 @@ const data = (r) => (r.json && r.json.data !== undefined ? r.json.data : r.json)
   rec("M9", "Administrator deactivates a user; the user tries to log in", "Login refused", deact === 200 && r.status >= 400, `deactivate ${deact}, login ${r.status}`);
 
   // M10 audit
-  r = await call("GET", "/audit/logs/?page_size=20", O);
+  r = await call("GET", "/audit/logs/?page_size=20", A);
   const logs = items(r);
-  rec("M10a", "Officer opens the audit log", "Entries for the steps above", r.status === 200 && logs.length > 0, `${logs.length} entries`);
-  const res = await fetch(BASE + "/audit/logs/export/", { headers: { Authorization: "Bearer " + O } });
+  rec("M10a", "Administrator opens the audit log", "Entries for the steps above", r.status === 200 && logs.length > 0, `${logs.length} entries`);
+  const res = await fetch(BASE + "/audit/logs/export/", { headers: { Authorization: "Bearer " + A } });
   const csv = await res.text();
   rec("M10b", "Export the audit log as CSV", "CSV file returned", res.status === 200 && csv.startsWith("created_at"), `${csv.split("\n").length - 1} rows`);
 
